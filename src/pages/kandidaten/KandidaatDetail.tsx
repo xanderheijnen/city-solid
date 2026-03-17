@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File, LogOut, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,10 +96,76 @@ export default function KandidaatDetail() {
     enabled: !!id,
   });
 
+  // Fetch uitstroom updates
+  const { data: uitstroomUpdates } = useQuery({
+    queryKey: ['uitstroom-updates', id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('cs_uitstroom_updates')
+        .select('*')
+        .eq('kandidaat_id', id!)
+        .order('datum', { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!id,
+  });
+
   const navigate = useNavigate();
   const deleteKandidaatAVG = useDeleteKandidaatAVG();
   const queryClient = useQueryClient();
   const { data: alleGroepen } = useTrainingsgroepen();
+
+  // ── Uitstroom ──
+  const [uitstroomDialogOpen, setUitstroomDialogOpen] = useState(false);
+  const [uitstroomForm, setUitstroomForm] = useState({
+    datum: new Date().toISOString().split('T')[0],
+    tijd: '',
+    inhoud: '',
+  });
+
+  const handleSaveUitstroomStatus = async (status: string) => {
+    if (!id) return;
+    try {
+      await updateKandidaat.mutateAsync({ id, uitstroom_status: status });
+      toast.success('Uitstroom status bijgewerkt');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Fout: ' + msg);
+    }
+  };
+
+  const handleAddUitstroomUpdate = async () => {
+    if (!id || !uitstroomForm.inhoud) return;
+    try {
+      const { error } = await supabase.from('cs_uitstroom_updates').insert({
+        kandidaat_id: id,
+        datum: uitstroomForm.datum,
+        tijd: uitstroomForm.tijd || null,
+        inhoud: uitstroomForm.inhoud,
+      });
+      if (error) throw error;
+      toast.success('Gespreksupdate toegevoegd');
+      queryClient.invalidateQueries({ queryKey: ['uitstroom-updates', id] });
+      setUitstroomDialogOpen(false);
+      setUitstroomForm({ datum: new Date().toISOString().split('T')[0], tijd: '', inhoud: '' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Fout: ' + msg);
+    }
+  };
+
+  const handleDeleteUitstroomUpdate = async (updateId: string) => {
+    if (!confirm('Weet je zeker dat je deze update wilt verwijderen?')) return;
+    try {
+      const { error } = await supabase.from('cs_uitstroom_updates').delete().eq('id', updateId);
+      if (error) throw error;
+      toast.success('Update verwijderd');
+      queryClient.invalidateQueries({ queryKey: ['uitstroom-updates', id] });
+    } catch (err) {
+      toast.error('Fout bij verwijderen');
+    }
+  };
 
   // ── Training toevoegen ──
   const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
@@ -443,6 +509,9 @@ export default function KandidaatDetail() {
           </TabsTrigger>
           <TabsTrigger value="notities">Notities ({notities?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="documenten">Documenten</TabsTrigger>
+          <TabsTrigger value="uitstroom">
+            <LogOut className="mr-1 h-4 w-4" />Uitstroom
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="persoon">
@@ -967,6 +1036,99 @@ export default function KandidaatDetail() {
             </Card>
           </div>
         </TabsContent>
+        {/* ── Uitstroom Tab ── */}
+        <TabsContent value="uitstroom">
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Uitstroom Status */}
+            <Card className="md:col-span-1">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Uitstroom Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <Select
+                  value={kandidaat.uitstroom_status ?? ''}
+                  onValueChange={handleSaveUitstroomStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecteer status..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="werk">Werk</SelectItem>
+                    <SelectItem value="school">School</SelectItem>
+                    <SelectItem value="lopend">Lopend</SelectItem>
+                    <SelectItem value="vrijwilligers_werk">Vrijwilligers werk</SelectItem>
+                    <SelectItem value="garantie_baan">Garantie baan</SelectItem>
+                    <SelectItem value="beschut_werk">Beschut werk</SelectItem>
+                    <SelectItem value="binnen">Binnen</SelectItem>
+                    <SelectItem value="no_show">No show</SelectItem>
+                    <SelectItem value="uitval">Uitval</SelectItem>
+                  </SelectContent>
+                </Select>
+                {kandidaat.uitstroom_status && (
+                  <Badge variant="outline" className="text-sm">
+                    {kandidaat.uitstroom_status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
+                  </Badge>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Gespreksupdates */}
+            <Card className="md:col-span-2">
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  Gespreksupdates
+                </CardTitle>
+                <PermissionGate roles={['admin', 'intaker']}>
+                  <Button size="sm" onClick={() => setUitstroomDialogOpen(true)}>
+                    <Plus className="mr-1 h-4 w-4" />
+                    Nieuwe update
+                  </Button>
+                </PermissionGate>
+              </CardHeader>
+              <CardContent>
+                {!uitstroomUpdates?.length ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    Nog geen gespreksupdates geplaatst.
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {uitstroomUpdates.map((update: any) => (
+                      <div key={update.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {new Date(update.datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </div>
+                            {update.tijd && (
+                              <span className="font-medium">{update.tijd}</span>
+                            )}
+                          </div>
+                          <PermissionGate roles={['admin', 'intaker']}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteUitstroomUpdate(update.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </PermissionGate>
+                        </div>
+                        <p className="text-sm whitespace-pre-wrap">{update.inhoud}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
       </Tabs>
 
       {/* Intake Inplannen Dialog */}
@@ -1166,6 +1328,53 @@ export default function KandidaatDetail() {
               Annuleren
             </Button>
             <Button onClick={handleCreateNotitie} disabled={!notitieForm.inhoud}>
+              Opslaan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Uitstroom Update Dialog */}
+      <Dialog open={uitstroomDialogOpen} onOpenChange={setUitstroomDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nieuwe Gespreksupdate</DialogTitle>
+            <DialogDescription>
+              Voeg een update toe n.a.v. een gevoerd gesprek met {kandidaat.voornaam} {kandidaat.achternaam}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Datum *</Label>
+                <Input
+                  type="date"
+                  value={uitstroomForm.datum}
+                  onChange={(e) => setUitstroomForm((f) => ({ ...f, datum: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tijdstip</Label>
+                <Input
+                  type="time"
+                  value={uitstroomForm.tijd}
+                  onChange={(e) => setUitstroomForm((f) => ({ ...f, tijd: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Inhoud gesprek *</Label>
+              <Textarea
+                rows={5}
+                value={uitstroomForm.inhoud}
+                onChange={(e) => setUitstroomForm((f) => ({ ...f, inhoud: e.target.value }))}
+                placeholder="Beschrijf het gevoerde gesprek..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUitstroomDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handleAddUitstroomUpdate} disabled={!uitstroomForm.inhoud}>
               Opslaan
             </Button>
           </DialogFooter>

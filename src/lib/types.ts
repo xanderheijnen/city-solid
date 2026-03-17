@@ -172,6 +172,9 @@ export interface Kandidaat {
   acties_afspraken: string | null;
   leefgebieden_aandacht: string | null;
 
+  // Uitstroom
+  uitstroom_status: string | null;
+
   // Bestanden (Supabase Storage URLs)
   foto_url: string | null;
   id_scan_url: string | null;
@@ -284,6 +287,21 @@ export interface Voortgang {
 
   // Joined relations (optional)
   kandidaat_training?: KandidaatTraining;
+}
+
+// ---------------------------------------------------------------------------
+// UitstroomUpdate (cs_uitstroom_updates)
+// ---------------------------------------------------------------------------
+
+export interface UitstroomUpdate {
+  id: string;
+  kandidaat_id: string;
+  datum: string;
+  tijd: string | null;
+  inhoud: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // ---------------------------------------------------------------------------
