@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
-import { Users, GraduationCap, TrendingUp, UserX, Loader2, Download } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Users, GraduationCap, TrendingUp, UserX, Loader2, Download, CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -8,6 +9,7 @@ import {
   Card, CardContent, CardDescription, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { useKandidaten } from '@/hooks/useKandidaten';
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { supabase } from '@/integrations/supabase/client';
@@ -51,9 +53,30 @@ function StatCard({ title, value, description, icon: Icon, iconColor }: StatCard
   );
 }
 
+// ─── Helper: week dates ─────────────────────────────────────────────────────
+function getWeekDates(weekOffset: number) {
+  const now = new Date();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay() + 6) % 7) + weekOffset * 7);
+  monday.setHours(0, 0, 0, 0);
+
+  const dates: Date[] = [];
+  for (let i = 0; i < 5; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function formatDateISO(d: Date) {
+  return d.toISOString().split('T')[0];
+}
+
 export default function Dashboard() {
   const { data: kandidaten, isLoading: loadingKandidaten } = useKandidaten();
   const { data: groepen, isLoading: loadingGroepen } = useTrainingsgroepen();
+  const [weekOffset, setWeekOffset] = useState(0);
 
   const { data: alleTrainingen } = useQuery({
     queryKey: ['dashboard-trainingen'],
@@ -136,6 +159,31 @@ export default function Dashboard() {
     }));
   }, [alleTrainingen]);
 
+  // ── Intake agenda data ──
+  const weekDates = useMemo(() => getWeekDates(weekOffset), [weekOffset]);
+  const intakeAfspraken = useMemo(() => {
+    if (!kandidaten?.length) return new Map<string, typeof kandidaten>();
+    const map = new Map<string, typeof kandidaten>();
+    kandidaten
+      .filter((k) => k.intake_datum && k.intake_tijd)
+      .forEach((k) => {
+        const d = k.intake_datum!;
+        if (!map.has(d)) map.set(d, []);
+        map.get(d)!.push(k);
+      });
+    // Sort per dag op tijd
+    map.forEach((list) => list.sort((a, b) => (a.intake_tijd ?? '').localeCompare(b.intake_tijd ?? '')));
+    return map;
+  }, [kandidaten]);
+
+  const totalIntakesDezWeek = useMemo(() => {
+    let count = 0;
+    weekDates.forEach((d) => {
+      count += intakeAfspraken.get(formatDateISO(d))?.length ?? 0;
+    });
+    return count;
+  }, [weekDates, intakeAfspraken]);
+
   const handleExport = () => {
     if (!kandidaten?.length) return;
     exportToExcel(kandidaten, 'city-solid-dashboard');
@@ -189,6 +237,82 @@ export default function Dashboard() {
           />
         </div>
       )}
+
+      {/* Intake Agenda */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-blue-600" />
+              Intake Agenda
+            </CardTitle>
+            <CardDescription>
+              {totalIntakesDezWeek} intake{totalIntakesDezWeek !== 1 ? 's' : ''} deze week
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekOffset((w) => w - 1)}>
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setWeekOffset(0)}>
+              Vandaag
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setWeekOffset((w) => w + 1)}>
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-5 gap-3">
+            {weekDates.map((date) => {
+              const iso = formatDateISO(date);
+              const afspraken = intakeAfspraken.get(iso) ?? [];
+              const isToday = iso === formatDateISO(new Date());
+              return (
+                <div
+                  key={iso}
+                  className={`rounded-lg border p-3 min-h-[120px] ${isToday ? 'border-blue-400 bg-blue-50/50' : ''}`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-xs font-medium uppercase ${isToday ? 'text-blue-700' : 'text-muted-foreground'}`}>
+                      {date.toLocaleDateString('nl-NL', { weekday: 'short' })}
+                    </span>
+                    <span className={`text-sm font-bold ${isToday ? 'text-blue-700' : ''}`}>
+                      {date.getDate()}
+                    </span>
+                  </div>
+                  {afspraken.length === 0 ? (
+                    <p className="text-xs text-muted-foreground/50 text-center mt-4">—</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {afspraken.map((k) => (
+                        <Link
+                          key={k.id}
+                          to={`/kandidaten/${k.id}`}
+                          className="block rounded bg-white border px-2 py-1.5 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="h-3 w-3 text-blue-500 shrink-0" />
+                            <span className="text-xs font-semibold text-blue-700">{k.intake_tijd}</span>
+                          </div>
+                          <p className="text-xs font-medium truncate mt-0.5">
+                            {k.voornaam} {k.achternaam}
+                          </p>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                  {afspraken.length > 0 && (
+                    <Badge variant="secondary" className="mt-2 text-[10px] w-full justify-center">
+                      {afspraken.length} intake{afspraken.length !== 1 ? 's' : ''}
+                    </Badge>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Charts row 1 */}
       <div className="grid gap-4 md:grid-cols-2">

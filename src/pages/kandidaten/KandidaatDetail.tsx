@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { PermissionGate } from '@/components/PermissionGate';
-import { useKandidaat, useDeleteKandidaatAVG } from '@/hooks/useKandidaten';
+import { useKandidaat, useUpdateKandidaat, useDeleteKandidaatAVG, useUpdateTrajectStatus } from '@/hooks/useKandidaten';
 import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNotities';
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
@@ -189,6 +189,43 @@ export default function KandidaatDetail() {
     }
   };
 
+  // ── Intake inplannen ──
+  const updateKandidaat = useUpdateKandidaat();
+  const updateTrajectStatus = useUpdateTrajectStatus();
+  const [intakeDialogOpen, setIntakeDialogOpen] = useState(false);
+  const [intakeForm, setIntakeForm] = useState({
+    datum: '',
+    tijd: '',
+  });
+
+  const openIntakeDialog = () => {
+    setIntakeForm({
+      datum: kandidaat?.intake_datum ?? new Date().toISOString().split('T')[0],
+      tijd: kandidaat?.intake_tijd ?? '10:00',
+    });
+    setIntakeDialogOpen(true);
+  };
+
+  const handlePlanIntake = async () => {
+    if (!id || !intakeForm.datum || !intakeForm.tijd) return;
+    try {
+      await updateKandidaat.mutateAsync({
+        id,
+        intake_datum: intakeForm.datum,
+        intake_tijd: intakeForm.tijd,
+      });
+      // Als status nog 'aanmelding' is, zet naar 'intake_gepland'
+      if (kandidaat?.traject_status === 'aanmelding') {
+        await updateTrajectStatus.mutateAsync({ id, traject_status: 'intake_gepland' });
+      }
+      toast.success('Intake ingepland');
+      setIntakeDialogOpen(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Fout: ' + msg);
+    }
+  };
+
   const [notitieDialogOpen, setNotitieDialogOpen] = useState(false);
   const [notitieForm, setNotitieForm] = useState({
     inhoud: '',
@@ -264,8 +301,29 @@ export default function KandidaatDetail() {
         </CardContent>
       </Card>
 
+      {/* Intake afspraak info */}
+      {kandidaat.intake_datum && kandidaat.intake_tijd && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="py-3 flex items-center gap-3">
+            <CalendarPlus className="h-5 w-5 text-blue-600 shrink-0" />
+            <div className="text-sm">
+              <span className="font-medium">Intake gepland:</span>{' '}
+              {new Date(kandidaat.intake_datum).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              {' om '}
+              <span className="font-semibold">{kandidaat.intake_tijd}</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Status advancement */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <PermissionGate roles={['admin', 'intaker']}>
+          <Button variant="outline" onClick={openIntakeDialog}>
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Intake Inplannen
+          </Button>
+        </PermissionGate>
         <PermissionGate roles={['admin', 'intaker']}>
           <Button asChild>
             <Link to={`/kandidaten/${id}/intake`}>
@@ -714,6 +772,44 @@ export default function KandidaatDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Intake Inplannen Dialog */}
+      <Dialog open={intakeDialogOpen} onOpenChange={setIntakeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Intake Inplannen</DialogTitle>
+            <DialogDescription>
+              Plan een intakegesprek in voor {kandidaat.voornaam} {kandidaat.achternaam}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Datum *</Label>
+                <Input
+                  type="date"
+                  value={intakeForm.datum}
+                  onChange={(e) => setIntakeForm((f) => ({ ...f, datum: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tijdstip *</Label>
+                <Input
+                  type="time"
+                  value={intakeForm.tijd}
+                  onChange={(e) => setIntakeForm((f) => ({ ...f, tijd: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIntakeDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handlePlanIntake} disabled={!intakeForm.datum || !intakeForm.tijd}>
+              Inplannen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Training Toevoegen Dialog */}
       <Dialog open={trainingDialogOpen} onOpenChange={setTrainingDialogOpen}>

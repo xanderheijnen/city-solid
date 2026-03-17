@@ -168,6 +168,7 @@ export interface Kandidaat {
   // Metadata
   aanmeld_datum: string | null;
   intake_datum: string | null;
+  intake_tijd: string | null;
   intake_door: string | null;
   intake_notities: string | null;
   created_by: string | null;
