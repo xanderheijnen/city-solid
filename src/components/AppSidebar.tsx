@@ -9,6 +9,7 @@ import {
   UserCog,
   List,
   FileText,
+  HelpCircle,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -62,6 +63,12 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'VOORTGANG',
     items: [
       { label: 'Voortgang & Resultaten', href: '/voortgang', icon: TrendingUp },
+    ],
+  },
+  {
+    title: 'HULP',
+    items: [
+      { label: 'Help Center', href: '/help', icon: HelpCircle },
     ],
   },
 ];

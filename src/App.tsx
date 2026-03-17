@@ -21,6 +21,7 @@ import Beheer from '@/pages/beheer/Beheer';
 import Gebruikers from '@/pages/beheer/Gebruikers';
 import Opties from '@/pages/beheer/Opties';
 import AuditLog from '@/pages/beheer/AuditLog';
+import HelpCenter from '@/pages/help/HelpCenter';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,6 +73,9 @@ export default function App() {
               <Route path="/beheer/gebruikers" element={<Gebruikers />} />
               <Route path="/beheer/opties" element={<Opties />} />
               <Route path="/beheer/audit" element={<AuditLog />} />
+
+              {/* Help */}
+              <Route path="/help" element={<HelpCenter />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
