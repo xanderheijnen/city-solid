@@ -55,6 +55,7 @@ export default function Aanmeldingen() {
                 <TableHead>Telefoon</TableHead>
                 <TableHead>Aanmelder</TableHead>
                 <TableHead>Organisatie</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Aanmelddatum</TableHead>
                 <TableHead>Intake datum</TableHead>
                 <TableHead className="w-48">Status</TableHead>
@@ -64,13 +65,13 @@ export default function Aanmeldingen() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-32 text-center">
+                  <TableCell colSpan={10} className="h-32 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : !kandidaten?.length ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
                     Nog geen aanmeldingen. Klik op "Nieuwe Aanmelding" om te beginnen.
                   </TableCell>
                 </TableRow>
@@ -91,10 +92,13 @@ export default function Aanmeldingen() {
                       {k.telefoon ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {k.door_wie_bekend ?? '—'}
+                      {k.aanmelder_naam || k.door_wie_bekend || '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {k.aanmeld_organisatie ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.gewenst_project?.join(', ') ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {k.aanmeld_datum ?? '—'}

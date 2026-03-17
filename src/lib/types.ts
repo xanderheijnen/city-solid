@@ -74,6 +74,7 @@ export interface Kandidaat {
   achternaam: string;
   geslacht: Geslacht | null;
   geboortedatum: string | null;
+  leeftijd: string | null;
   geboorteplaats: string | null;
   bsn: string | null;
   nationaliteit: string | null;
@@ -100,9 +101,14 @@ export interface Kandidaat {
   uitkering: string[] | null;
   toestemming: boolean;
 
-  // Verwijzing
+  // Verwijzing & aanmelder
+  aanmeld_type: string | null;
+  aanmelder_naam: string | null;
+  aanmelder_telefoon: string | null;
+  aanmelder_email: string | null;
   door_wie_bekend: string | null;
   aanmeld_organisatie: string | null;
+  gewenst_project: string[] | null;
 
   // Sector & certificaat voorkeur
   gewenste_sector: string[] | null;
