@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,10 +18,11 @@ import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaat, useDeleteKandidaatAVG } from '@/hooks/useKandidaten';
 import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNotities';
+import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
 import type { Geslacht, Notitie, Resultaat } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { exportIntakeRapport, exportVoortgangsRapport } from '@/lib/word';
 
 function InfoRow({ label, value }: { label: string; value: string | null | undefined | boolean }) {
@@ -95,6 +97,97 @@ export default function KandidaatDetail() {
 
   const navigate = useNavigate();
   const deleteKandidaatAVG = useDeleteKandidaatAVG();
+  const queryClient = useQueryClient();
+  const { data: alleGroepen } = useTrainingsgroepen();
+
+  // ── Training toevoegen ──
+  const [trainingDialogOpen, setTrainingDialogOpen] = useState(false);
+  const [selectedGroepId, setSelectedGroepId] = useState('');
+  const [addingTraining, setAddingTraining] = useState(false);
+
+  const handleAddTraining = async () => {
+    if (!id || !selectedGroepId) return;
+    setAddingTraining(true);
+    try {
+      const { error } = await supabase
+        .from('cs_kandidaat_trainingen')
+        .insert({ kandidaat_id: id, trainingsgroep_id: selectedGroepId });
+      if (error) throw error;
+      toast.success('Training gekoppeld');
+      queryClient.invalidateQueries({ queryKey: ['kandidaat-trainingen', id] });
+      setTrainingDialogOpen(false);
+      setSelectedGroepId('');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Fout: ' + msg);
+    } finally {
+      setAddingTraining(false);
+    }
+  };
+
+  const handleRemoveTraining = async (ktId: string) => {
+    if (!confirm('Weet je zeker dat je deze training wilt ontkoppelen? Bijbehorende voortgang en aanwezigheid worden ook verwijderd.')) return;
+    try {
+      // Delete voortgang & aanwezigheid first
+      await supabase.from('cs_voortgang').delete().eq('kandidaat_training_id', ktId);
+      await supabase.from('cs_aanwezigheid').delete().eq('kandidaat_training_id', ktId);
+      const { error } = await supabase.from('cs_kandidaat_trainingen').delete().eq('id', ktId);
+      if (error) throw error;
+      toast.success('Training ontkoppeld');
+      queryClient.invalidateQueries({ queryKey: ['kandidaat-trainingen', id] });
+      queryClient.invalidateQueries({ queryKey: ['kandidaat-certificaten', id] });
+    } catch (err) {
+      toast.error('Fout bij ontkoppelen');
+    }
+  };
+
+  // ── Certificaat toevoegen ──
+  const [certDialogOpen, setCertDialogOpen] = useState(false);
+  const [certForm, setCertForm] = useState({
+    kandidaat_training_id: '',
+    omschrijving: '',
+    datum: new Date().toISOString().split('T')[0],
+    behaald: true,
+    score: '',
+  });
+  const [addingCert, setAddingCert] = useState(false);
+
+  const handleAddCertificaat = async () => {
+    if (!certForm.kandidaat_training_id || !certForm.omschrijving) return;
+    setAddingCert(true);
+    try {
+      const { error } = await supabase.from('cs_voortgang').insert({
+        kandidaat_training_id: certForm.kandidaat_training_id,
+        omschrijving: certForm.omschrijving,
+        datum: certForm.datum,
+        type: 'certificaat',
+        behaald: certForm.behaald,
+        score: certForm.score ? parseFloat(certForm.score) : null,
+      });
+      if (error) throw error;
+      toast.success('Certificaat geregistreerd');
+      queryClient.invalidateQueries({ queryKey: ['kandidaat-certificaten', id] });
+      setCertDialogOpen(false);
+      setCertForm({ kandidaat_training_id: '', omschrijving: '', datum: new Date().toISOString().split('T')[0], behaald: true, score: '' });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Fout: ' + msg);
+    } finally {
+      setAddingCert(false);
+    }
+  };
+
+  const handleDeleteCertificaat = async (certId: string) => {
+    if (!confirm('Weet je zeker dat je dit certificaat wilt verwijderen?')) return;
+    try {
+      const { error } = await supabase.from('cs_voortgang').delete().eq('id', certId);
+      if (error) throw error;
+      toast.success('Certificaat verwijderd');
+      queryClient.invalidateQueries({ queryKey: ['kandidaat-certificaten', id] });
+    } catch (err) {
+      toast.error('Fout bij verwijderen');
+    }
+  };
 
   const [notitieDialogOpen, setNotitieDialogOpen] = useState(false);
   const [notitieForm, setNotitieForm] = useState({
@@ -373,7 +466,15 @@ export default function KandidaatDetail() {
         {/* ── Trainingen Tab ── */}
         <TabsContent value="trainingen">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="text-base">Trainingen</CardTitle>
+              <PermissionGate roles={['admin', 'intaker', 'trainer']}>
+                <Button size="sm" onClick={() => setTrainingDialogOpen(true)}>
+                  <Plus className="mr-1 h-4 w-4" />Training Toevoegen
+                </Button>
+              </PermissionGate>
+            </CardHeader>
+            <CardContent>
               {!trainingen?.length ? (
                 <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
                   Nog niet gekoppeld aan een trainingsgroep
@@ -381,24 +482,27 @@ export default function KandidaatDetail() {
               ) : (
                 <div className="space-y-3">
                   {trainingen.map((t: any) => (
-                    <Link
-                      key={t.id}
-                      to={`/trainingen/groepen/${t.trainingsgroep_id}`}
-                      className="block rounded-lg border p-4 hover:bg-muted/50 transition-colors"
-                    >
+                    <div key={t.id} className="rounded-lg border p-4 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <Link to={`/trainingen/groepen/${t.trainingsgroep_id}`} className="flex-1">
                           <p className="font-mono font-medium">{t.trainingsgroep?.groepscode}</p>
                           <p className="text-sm text-muted-foreground">{t.trainingsgroep?.training?.naam}</p>
+                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={t.resultaat === 'behaald' ? 'default' : 'secondary'}>
+                            {RESULTAAT_LABELS[t.resultaat as Resultaat] ?? t.resultaat}
+                          </Badge>
+                          <PermissionGate roles={['admin']}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTraining(t.id)}>
+                              <UserMinus className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </PermissionGate>
                         </div>
-                        <Badge variant={t.resultaat === 'behaald' ? 'default' : 'secondary'}>
-                          {RESULTAAT_LABELS[t.resultaat as Resultaat] ?? t.resultaat}
-                        </Badge>
                       </div>
                       <div className="mt-2 text-xs text-muted-foreground">
                         {t.trainingsgroep?.start_datum} — {t.trainingsgroep?.eind_datum ?? 'lopend'}
                       </div>
-                    </Link>
+                    </div>
                   ))}
                 </div>
               )}
@@ -427,11 +531,24 @@ export default function KandidaatDetail() {
 
             {/* Behaalde certificaten uit trainingen */}
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-base">Behaalde Certificaten</CardTitle>
+                <PermissionGate roles={['admin', 'intaker', 'trainer']}>
+                  <Button
+                    size="sm"
+                    onClick={() => setCertDialogOpen(true)}
+                    disabled={!trainingen?.length}
+                  >
+                    <Plus className="mr-1 h-4 w-4" />Certificaat Toekennen
+                  </Button>
+                </PermissionGate>
               </CardHeader>
               <CardContent>
-                {!certificaten?.length ? (
+                {!trainingen?.length ? (
+                  <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
+                    Koppel eerst een training om certificaten toe te kennen
+                  </div>
+                ) : !certificaten?.length ? (
                   <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
                     Nog geen certificaten behaald in trainingen
                   </div>
@@ -462,6 +579,11 @@ export default function KandidaatDetail() {
                             </div>
                           )}
                         </div>
+                        <PermissionGate roles={['admin']}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleDeleteCertificaat(cert.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </PermissionGate>
                       </div>
                     ))}
                   </div>
@@ -592,6 +714,117 @@ export default function KandidaatDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Training Toevoegen Dialog */}
+      <Dialog open={trainingDialogOpen} onOpenChange={setTrainingDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Training Toevoegen</DialogTitle>
+            <DialogDescription>
+              Koppel {kandidaat.voornaam} {kandidaat.achternaam} aan een trainingsgroep.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Trainingsgroep *</Label>
+              <Select value={selectedGroepId} onValueChange={setSelectedGroepId}>
+                <SelectTrigger><SelectValue placeholder="Selecteer een groep..." /></SelectTrigger>
+                <SelectContent>
+                  {alleGroepen
+                    ?.filter((g: any) => !trainingen?.some((t: any) => t.trainingsgroep_id === g.id))
+                    .map((g: any) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.groepscode ?? '—'} — {g.training?.naam ?? 'Onbekend'} ({g.status})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTrainingDialogOpen(false)}>Annuleren</Button>
+            <Button onClick={handleAddTraining} disabled={!selectedGroepId || addingTraining}>
+              {addingTraining && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Toevoegen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Certificaat Toekennen Dialog */}
+      <Dialog open={certDialogOpen} onOpenChange={setCertDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Certificaat Toekennen</DialogTitle>
+            <DialogDescription>
+              Registreer een certificaat voor {kandidaat.voornaam} {kandidaat.achternaam}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Training / Groep *</Label>
+              <Select
+                value={certForm.kandidaat_training_id}
+                onValueChange={(v) => setCertForm((f) => ({ ...f, kandidaat_training_id: v }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Selecteer een training..." /></SelectTrigger>
+                <SelectContent>
+                  {trainingen?.map((t: any) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.trainingsgroep?.groepscode ?? '—'} — {t.trainingsgroep?.training?.naam ?? 'Onbekend'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Certificaat naam *</Label>
+              <Input
+                value={certForm.omschrijving}
+                onChange={(e) => setCertForm((f) => ({ ...f, omschrijving: e.target.value }))}
+                placeholder="Bijv. VCA Basis, Heftruck, BHV..."
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Datum</Label>
+                <Input
+                  type="date"
+                  value={certForm.datum}
+                  onChange={(e) => setCertForm((f) => ({ ...f, datum: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Score (optioneel)</Label>
+                <Input
+                  type="number"
+                  value={certForm.score}
+                  onChange={(e) => setCertForm((f) => ({ ...f, score: e.target.value }))}
+                  placeholder="Bijv. 8.5"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="cert-behaald"
+                checked={certForm.behaald}
+                onCheckedChange={(v) => setCertForm((f) => ({ ...f, behaald: !!v }))}
+              />
+              <Label htmlFor="cert-behaald">Behaald</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCertDialogOpen(false)}>Annuleren</Button>
+            <Button
+              onClick={handleAddCertificaat}
+              disabled={!certForm.kandidaat_training_id || !certForm.omschrijving || addingCert}
+            >
+              {addingCert && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Toekennen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Create Notitie Dialog */}
       <Dialog open={notitieDialogOpen} onOpenChange={setNotitieDialogOpen}>
