@@ -59,11 +59,15 @@ Daarnaast toont het dashboard een **staafdiagram** met kandidaten per trajectfas
 
 1. **Voornaam** en **Achternaam** (verplicht)
 2. **E-mailadres** en **Telefoonnummer**
-3. **Geboortedatum**
+3. **Geboortedatum** en **Leeftijd**
 4. **Bron** — hoe de kandidaat is binnengekomen
+5. **Aanmeld organisatie** — de organisatie die de aanmelding doet
+6. **Aanmeld type** — of de kandidaat zichzelf aanmeldt of door iemand anders wordt aangemeld
+7. **Aanmelder gegevens** — bij aanmelding door een ander: naam, telefoon en e-mail van de aanmelder
+8. **Gewenst project** — welk project de kandidaat wil volgen (Certi & Skills, Cityteam, City Side Jobs)
 
 Na het opslaan verschijnt de kandidaat in het aanmeldingenoverrzicht met de status "Aangemeld".`,
-        tags: ['aanmelding', 'nieuw', 'kandidaat', 'registreren', 'toevoegen'],
+        tags: ['aanmelding', 'nieuw', 'kandidaat', 'registreren', 'toevoegen', 'organisatie', 'aanmelder'],
       },
       {
         title: 'Aanmeldingenlijst',
@@ -116,12 +120,19 @@ Klik op een kandidaat om het volledige detailscherm te openen.`,
 
 • **Persoon** — persoonlijke gegevens, adres, contact, financieel, sector/voorkeur, motivatie, thuissituatie, schulden, opleidingen, cursussen, werkervaring en acties/afspraken
 • **Intake** — het intakeformulier en de mogelijkheid om een intake uit te voeren
-• **Documenten** — geüploade bestanden
+• **Documenten** — geüploade bestanden (foto, ID scan, CV en overige documenten)
 • **Notities** — vrije notities van medewerkers
-• **Voortgang** — visuele weergave van de trajectfase
+• **Voortgang** — visuele weergave van de trajectfase (tramlijn) met status-indicatoren voor foto, ID scan en CV
+• **Uitstroom** — uitstroomstatus instellen en gespreksupdates bijhouden
+
+**Bestanden uploaden:**
+Op de detailpagina kun je per kandidaat een **pasfoto**, **ID-scan** en **CV** uploaden. De uploadstatus wordt visueel weergegeven op de voortgangs-tramlijn met groene (aanwezig) of grijze (ontbrekend) indicatoren.
+
+**Uitstroom beheren:**
+Op het Uitstroom-tab kun je de uitstroomstatus instellen (bijv. Werk, School, Lopend, Vrijwilligerswerk, Garantiebaan, Beschut werk, Binnen, No-show of Uitval). Daarnaast kun je gespreksupdates toevoegen met datum, tijd en inhoud om het uitstroomproces te documenteren.
 
 Je kunt vanuit de detailpagina ook een **Word-rapport exporteren** met alle intakegegevens.`,
-        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport'],
+        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport', 'uitstroom', 'foto', 'id scan', 'cv', 'upload', 'bestanden'],
       },
       {
         title: 'Intake uitvoeren',
@@ -395,6 +406,18 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: 'Bij de batch-import worden Excel (.xlsx, .xls), CSV, Word (.docx), PDF en afbeeldingen (PNG, JPG) ondersteund. Bij documenten uploaden op de kandidaat-detailpagina worden alle gangbare bestandsformaten geaccepteerd.',
     category: 'Kandidaten',
     tags: ['upload', 'bestand', 'formaat', 'excel', 'pdf', 'word', 'afbeelding'],
+  },
+  {
+    question: 'Hoe upload ik een foto, ID-scan of CV voor een kandidaat?',
+    answer: 'Ga naar de kandidaat-detailpagina. Op de tab "Persoon" vind je de upload-knoppen voor pasfoto, ID-scan en CV. Klik op de upload-knop, selecteer het bestand en het wordt automatisch opgeslagen. De uploadstatus wordt weergegeven op de voortgangs-tramlijn met groene (aanwezig) of grijze (ontbrekend) indicatoren.',
+    category: 'Kandidaten',
+    tags: ['foto', 'id scan', 'cv', 'upload', 'bestand', 'tramlijn', 'pasfoto'],
+  },
+  {
+    question: 'Hoe beheer ik de uitstroom van een kandidaat?',
+    answer: 'Open de kandidaat-detailpagina en ga naar het tab "Uitstroom". Hier kun je de uitstroomstatus instellen (bijv. Werk, School, Lopend, Vrijwilligerswerk, Garantiebaan, Beschut werk, Binnen, No-show of Uitval). Je kunt ook gespreksupdates toevoegen met datum, tijd en inhoud om het uitstroomproces te documenteren.',
+    category: 'Kandidaten',
+    tags: ['uitstroom', 'status', 'gesprek', 'update', 'werk', 'school'],
   },
   {
     question: 'Is de data beveiligd?',
