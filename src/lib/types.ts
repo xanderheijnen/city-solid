@@ -102,6 +102,7 @@ export interface Kandidaat {
 
   // Verwijzing
   door_wie_bekend: string | null;
+  aanmeld_organisatie: string | null;
 
   // Sector & certificaat voorkeur
   gewenste_sector: string[] | null;

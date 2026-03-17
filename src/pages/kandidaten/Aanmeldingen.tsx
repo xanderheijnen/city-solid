@@ -52,7 +52,11 @@ export default function Aanmeldingen() {
               <TableRow>
                 <TableHead className="w-24">ID</TableHead>
                 <TableHead>Naam</TableHead>
-                <TableHead>Datum</TableHead>
+                <TableHead>Telefoon</TableHead>
+                <TableHead>Aanmelder</TableHead>
+                <TableHead>Organisatie</TableHead>
+                <TableHead>Aanmelddatum</TableHead>
+                <TableHead>Intake datum</TableHead>
                 <TableHead className="w-48">Status</TableHead>
                 <TableHead className="w-64">Voortgang</TableHead>
               </TableRow>
@@ -60,13 +64,13 @@ export default function Aanmeldingen() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center">
+                  <TableCell colSpan={9} className="h-32 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : !kandidaten?.length ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                     Nog geen aanmeldingen. Klik op "Nieuwe Aanmelding" om te beginnen.
                   </TableCell>
                 </TableRow>
@@ -83,8 +87,25 @@ export default function Aanmeldingen() {
                         {k.voornaam} {k.achternaam}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.telefoon ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.door_wie_bekend ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.aanmeld_organisatie ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
                       {k.aanmeld_datum ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.intake_datum ? (
+                        <span>
+                          {k.intake_datum}
+                          {k.intake_tijd ? <span className="ml-1 text-xs">({k.intake_tijd})</span> : null}
+                        </span>
+                      ) : '—'}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={k.traject_status} />

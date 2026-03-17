@@ -14,6 +14,8 @@ interface AanmeldingForm {
   telefoon: string;
   email: string;
   geslacht: string;
+  door_wie_bekend: string;
+  aanmeld_organisatie: string;
 }
 
 export default function NieuweAanmelding() {
@@ -29,6 +31,8 @@ export default function NieuweAanmelding() {
         telefoon: data.telefoon || null,
         email: data.email || null,
         geslacht: data.geslacht || 'onbekend',
+        door_wie_bekend: data.door_wie_bekend || null,
+        aanmeld_organisatie: data.aanmeld_organisatie || null,
         traject_status: 'aanmelding',
       });
       toast.success(`Aanmelding ${result.display_id} aangemaakt`);
@@ -86,6 +90,17 @@ export default function NieuweAanmelding() {
               <div className="space-y-2">
                 <Label htmlFor="email">E-mail</Label>
                 <Input id="email" type="email" {...register('email')} />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="door_wie_bekend">Aanmelder</Label>
+                <Input id="door_wie_bekend" placeholder="Naam van de aanmelder" {...register('door_wie_bekend')} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="aanmeld_organisatie">Aanmeld organisatie</Label>
+                <Input id="aanmeld_organisatie" placeholder="Naam van de organisatie" {...register('aanmeld_organisatie')} />
               </div>
             </div>
 
