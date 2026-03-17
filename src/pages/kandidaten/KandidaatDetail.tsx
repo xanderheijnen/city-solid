@@ -186,23 +186,28 @@ export default function KandidaatDetail() {
         <TabsContent value="persoon">
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
-              <CardHeader><CardTitle className="text-base">Persoonlijk</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Persoonlijke gegevens</CardTitle></CardHeader>
               <CardContent>
                 <dl>
                   <InfoRow label="Geslacht" value={kandidaat.geslacht ? GESLACHT_LABELS[kandidaat.geslacht as Geslacht] : null} />
                   <InfoRow label="Geboortedatum" value={kandidaat.geboortedatum} />
+                  <InfoRow label="Geboorteplaats" value={kandidaat.geboorteplaats} />
+                  <InfoRow label="BSN" value={kandidaat.bsn} />
+                  <InfoRow label="Nationaliteit" value={kandidaat.nationaliteit} />
                 </dl>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">Contact</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Contact & Verwijzing</CardTitle></CardHeader>
               <CardContent>
                 <dl>
                   <InfoRow label="Telefoon" value={kandidaat.telefoon} />
                   <InfoRow label="Email" value={kandidaat.email} />
                   <InfoRow label="Contactpersoon" value={kandidaat.contactpersoon} />
                   <InfoRow label="WhatsApp" value={kandidaat.whatsapp} />
+                  <InfoRow label="Zorgverzekering" value={kandidaat.zorgverzekering} />
+                  <InfoRow label="Door wie bekend" value={kandidaat.door_wie_bekend} />
                 </dl>
               </CardContent>
             </Card>
@@ -213,7 +218,9 @@ export default function KandidaatDetail() {
                 <dl>
                   <InfoRow label="Straat" value={kandidaat.straat} />
                   <InfoRow label="Postcode" value={kandidaat.postcode} />
+                  <InfoRow label="Woonplaats" value={kandidaat.woonplaats} />
                   <InfoRow label="Ingeschreven adres (BRP)" value={kandidaat.ingeschreven_adres_brp} />
+                  <InfoRow label="Reden geen BRP" value={kandidaat.reden_geen_brp} />
                   <InfoRow label="Wijk" value={kandidaat.wijk} />
                   <InfoRow label="Gebied" value={kandidaat.gebied} />
                 </dl>
@@ -225,6 +232,7 @@ export default function KandidaatDetail() {
               <CardContent>
                 <dl>
                   <InfoRow label="Uitkering" value={kandidaat.uitkering?.join(', ')} />
+                  <InfoRow label="Klantmanager" value={kandidaat.klantmanager} />
                   <InfoRow label="Toestemming" value={kandidaat.toestemming} />
                   <InfoRow label="Eigen vervoer" value={kandidaat.eigen_vervoer} />
                   <InfoRow label="Rijbewijs" value={kandidaat.rijbewijs} />
@@ -233,14 +241,72 @@ export default function KandidaatDetail() {
             </Card>
 
             <Card>
-              <CardHeader><CardTitle className="text-base">Doelen & Ondersteuning</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-base">Sector & Voorkeur</CardTitle></CardHeader>
               <CardContent>
                 <dl>
-                  <InfoRow label="Klantmanager" value={kandidaat.klantmanager} />
+                  <InfoRow label="Gewenste sector" value={kandidaat.gewenste_sector?.join(', ')} />
+                  <InfoRow label="1e certificaat voorkeur" value={kandidaat.certificaat_voorkeur_1} />
+                  <InfoRow label="2e certificaat voorkeur" value={kandidaat.certificaat_voorkeur_2} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Motivatie & Competenties</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Motivatie" value={kandidaat.motivatie} />
+                  <InfoRow label="Demotivatie / belemmeringen" value={kandidaat.demotivatie} />
                   <InfoRow label="Stip aan de horizon" value={kandidaat.stip_aan_de_horizon} />
-                  <InfoRow label="Trajecten" value={kandidaat.trajecten} />
+                  <InfoRow label="Goede eigenschappen" value={kandidaat.goede_eigenschappen} />
+                  <InfoRow label="Minder goed in" value={kandidaat.minder_goed_in} />
+                  <InfoRow label="Talen" value={kandidaat.talen} />
+                  <InfoRow label="Hobby's" value={kandidaat.hobbys} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Thuissituatie</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Woonsituatie" value={kandidaat.woonsituatie} />
+                  <InfoRow label="Kinderen" value={kandidaat.kinderen} />
+                  <InfoRow label="Eerder trajecten" value={kandidaat.trajecten} />
                   <InfoRow label="Hulpverleners betrokken" value={kandidaat.hulpverleners_betrokken} />
-                  <InfoRow label="Afspraken hulp" value={kandidaat.afspraken_hulp} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Schulden</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Heeft schulden" value={kandidaat.heeft_schulden} />
+                  <InfoRow label="Reden en bedrag" value={kandidaat.schulden_reden_bedrag} />
+                  <InfoRow label="Afspraken schuldhulp" value={kandidaat.schulden_afspraken} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Opleidingen</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Opleiding" value={kandidaat.opleiding} />
+                  <InfoRow label="Diploma behaald" value={kandidaat.diploma_behaald} />
+                  <InfoRow label="Niveau" value={kandidaat.opleiding_niveau} />
+                  <InfoRow label="Reden uitval" value={kandidaat.reden_uitval} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Cursussen & Certificaten</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Cursussen gevolgd" value={kandidaat.cursussen_gevolgd} />
+                  <InfoRow label="Certificaten behaald" value={kandidaat.certificaten_behaald} />
                 </dl>
               </CardContent>
             </Card>
@@ -250,7 +316,19 @@ export default function KandidaatDetail() {
               <CardContent>
                 <dl>
                   <InfoRow label="Werkervaring" value={kandidaat.werkervaring} />
-                  <InfoRow label="Certificaten behaald" value={kandidaat.certificaten_behaald} />
+                  <InfoRow label="Waarom lukte het wel/niet" value={kandidaat.waarom_lukte_niet} />
+                  <InfoRow label="Heeft CV" value={kandidaat.heeft_cv} />
+                </dl>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base">Acties & Afspraken</CardTitle></CardHeader>
+              <CardContent>
+                <dl>
+                  <InfoRow label="Afspraken" value={kandidaat.acties_afspraken} />
+                  <InfoRow label="Leefgebieden aandacht" value={kandidaat.leefgebieden_aandacht} />
+                  <InfoRow label="Afspraken hulp" value={kandidaat.afspraken_hulp} />
                 </dl>
               </CardContent>
             </Card>

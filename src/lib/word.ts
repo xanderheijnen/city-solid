@@ -158,13 +158,16 @@ export async function exportIntakeRapport(kandidaat: Kandidaat) {
           ],
         }),
 
-        // Persoonlijk
-        sectionHeading('Persoonsgegevens'),
+        // Persoonlijke gegevens
+        sectionHeading('Persoonlijke gegevens'),
         infoTable([
           ['Voornaam', kandidaat.voornaam],
           ['Achternaam', kandidaat.achternaam],
           ['Geslacht', kandidaat.geslacht ? GESLACHT_LABELS[kandidaat.geslacht as Geslacht] : '—'],
           ['Geboortedatum', fmtDate(kandidaat.geboortedatum)],
+          ['Geboorteplaats', fmt(kandidaat.geboorteplaats)],
+          ['BSN', fmt(kandidaat.bsn)],
+          ['Nationaliteit', fmt(kandidaat.nationaliteit)],
         ]),
         spacer(),
 
@@ -173,14 +176,16 @@ export async function exportIntakeRapport(kandidaat: Kandidaat) {
         infoTable([
           ['Straat', fmt(kandidaat.straat)],
           ['Postcode', fmt(kandidaat.postcode)],
+          ['Woonplaats', fmt(kandidaat.woonplaats)],
           ['Ingeschreven adres (BRP)', fmt(kandidaat.ingeschreven_adres_brp)],
+          ['Reden geen BRP/ander adres', fmt(kandidaat.reden_geen_brp)],
           ['Wijk', fmt(kandidaat.wijk)],
           ['Gebied', fmt(kandidaat.gebied)],
         ]),
         spacer(),
 
-        // Contact
-        sectionHeading('Contactgegevens'),
+        // Contact & verwijzing
+        sectionHeading('Contactgegevens & Verwijzing'),
         infoTable([
           ['Telefoon', fmt(kandidaat.telefoon)],
           ['Email', fmt(kandidaat.email)],
@@ -188,67 +193,124 @@ export async function exportIntakeRapport(kandidaat: Kandidaat) {
           ['WhatsApp', fmt(kandidaat.whatsapp)],
           ['Eigen vervoer', fmt(kandidaat.eigen_vervoer)],
           ['Rijbewijs', fmt(kandidaat.rijbewijs)],
+          ['Zorgverzekering', fmt(kandidaat.zorgverzekering)],
+          ['Door wie bekend', fmt(kandidaat.door_wie_bekend)],
         ]),
         spacer(),
 
         // Financieel
-        sectionHeading('Financieel & Toestemming'),
+        sectionHeading('Financieel'),
         infoTable([
           ['Uitkering', kandidaat.uitkering?.join(', ') ?? '—'],
+          ['Klantmanager', fmt(kandidaat.klantmanager)],
           ['Toestemming', fmt(kandidaat.toestemming)],
         ]),
         spacer(),
 
-        // Gezondheid
-        sectionHeading('Gezondheid'),
+        // Sector & voorkeur
+        sectionHeading('Sector & Certificaat voorkeur'),
+        infoTable([
+          ['Gewenste sector', kandidaat.gewenste_sector?.join(', ') ?? '—'],
+          ['1e certificaat voorkeur', fmt(kandidaat.certificaat_voorkeur_1)],
+          ['2e certificaat voorkeur', fmt(kandidaat.certificaat_voorkeur_2)],
+        ]),
+        spacer(),
+
+        // Motivatie & competenties
+        sectionHeading('Motivatie, Competenties & Vaardigheden'),
+        infoTable([
+          ['Motivatie', fmt(kandidaat.motivatie)],
+          ['Demotivatie / belemmeringen', fmt(kandidaat.demotivatie)],
+          ['Stip aan de horizon', fmt(kandidaat.stip_aan_de_horizon)],
+          ['Goede eigenschappen', fmt(kandidaat.goede_eigenschappen)],
+          ['Minder goed in', fmt(kandidaat.minder_goed_in)],
+          ['Talen', fmt(kandidaat.talen)],
+          ["Hobby's", fmt(kandidaat.hobbys)],
+        ]),
+        spacer(),
+
+        // Thuissituatie
+        sectionHeading('Thuissituatie'),
+        infoTable([
+          ['Woonsituatie', fmt(kandidaat.woonsituatie)],
+          ['Kinderen', fmt(kandidaat.kinderen)],
+          ['Eerder trajecten deelgenomen', fmt(kandidaat.trajecten)],
+          ['Hulpverleners betrokken', fmt(kandidaat.hulpverleners_betrokken)],
+        ]),
+        spacer(),
+
+        // Gezondheid & middelengebruik
+        sectionHeading('Gezondheid & Middelengebruik'),
         new Paragraph({
           spacing: { before: 100, after: 50 },
           children: [
-            new TextRun({ text: '⚠ AVG-gevoelige informatie', italics: true, size: 18, color: 'EF4444' }),
+            new TextRun({ text: 'AVG-gevoelige informatie', italics: true, size: 18, color: 'EF4444' }),
           ],
         }),
         infoTable([
           ['Medische bijzonderheden', fmt(kandidaat.medische_bijzonderheden)],
+          ['Middelengebruik (drugs/alcohol)', fmt(kandidaat.middelengebruik)],
         ]),
         spacer(),
 
-        // Casemanagement & Doelen
-        sectionHeading('Casemanagement & Doelen'),
+        // Schulden
+        sectionHeading('Schulden'),
         infoTable([
-          ['Klantmanager', fmt(kandidaat.klantmanager)],
-          ['Stip aan de horizon', fmt(kandidaat.stip_aan_de_horizon)],
-        ]),
-        spacer(),
-
-        // Ondersteuning
-        sectionHeading('Ondersteuning'),
-        infoTable([
-          ['Trajecten', fmt(kandidaat.trajecten)],
-          ['Hulpverleners betrokken', fmt(kandidaat.hulpverleners_betrokken)],
-          ['Afspraken hulp', fmt(kandidaat.afspraken_hulp)],
+          ['Heeft schulden', fmt(kandidaat.heeft_schulden)],
+          ['Reden en bedrag', fmt(kandidaat.schulden_reden_bedrag)],
+          ['Afspraken/hulp', fmt(kandidaat.schulden_afspraken)],
         ]),
         spacer(),
 
         // Justitie
-        sectionHeading('Justitieel'),
+        sectionHeading('Justitieel verleden'),
         new Paragraph({
           spacing: { before: 100, after: 50 },
           children: [
-            new TextRun({ text: '⚠ AVG-gevoelige informatie', italics: true, size: 18, color: 'EF4444' }),
+            new TextRun({ text: 'AVG-gevoelige informatie', italics: true, size: 18, color: 'EF4444' }),
           ],
         }),
         infoTable([
           ['Aanraking politie/justitie', fmt(kandidaat.aanraking_politie_justitie)],
           ['Reden', fmt(kandidaat.aanraking_reden)],
+          ['Veroordeeld/detentie', fmt(kandidaat.veroordeeld_detentie)],
           ['Lopende zaken', fmt(kandidaat.lopende_zaken)],
         ]),
         spacer(),
 
+        // Opleidingen
+        sectionHeading('Opleidingen'),
+        infoTable([
+          ['Opleiding', fmt(kandidaat.opleiding)],
+          ['Diploma behaald', fmt(kandidaat.diploma_behaald)],
+          ['Niveau', fmt(kandidaat.opleiding_niveau)],
+          ['Reden uitval', fmt(kandidaat.reden_uitval)],
+        ]),
+        spacer(),
+
+        // Cursussen & certificaten
+        sectionHeading('Cursussen & Certificaten'),
+        infoTable([
+          ['Cursussen gevolgd', fmt(kandidaat.cursussen_gevolgd)],
+          ['Certificaten behaald', fmt(kandidaat.certificaten_behaald)],
+        ]),
+        spacer(),
+
         // Werkervaring
-        sectionHeading('Werkervaring & Certificaten'),
+        sectionHeading('Werkervaring'),
         infoTable([
           ['Werkervaring', fmt(kandidaat.werkervaring)],
-          ['Certificaten behaald', fmt(kandidaat.certificaten_behaald)],
+          ['Waarom lukte het wel/niet', fmt(kandidaat.waarom_lukte_niet)],
+          ['Heeft CV', fmt(kandidaat.heeft_cv)],
+        ]),
+        spacer(),
+
+        // Acties
+        sectionHeading('Acties Deelnemer & Coach'),
+        infoTable([
+          ['Afspraken', fmt(kandidaat.acties_afspraken)],
+          ['Leefgebieden aandacht', fmt(kandidaat.leefgebieden_aandacht)],
+          ['Afspraken hulp', fmt(kandidaat.afspraken_hulp)],
         ]),
         spacer(),
 

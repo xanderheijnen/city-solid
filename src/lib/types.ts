@@ -74,11 +74,16 @@ export interface Kandidaat {
   achternaam: string;
   geslacht: Geslacht | null;
   geboortedatum: string | null;
+  geboorteplaats: string | null;
+  bsn: string | null;
+  nationaliteit: string | null;
 
   // Adres
   straat: string | null;
   postcode: string | null;
+  woonplaats: string | null;
   ingeschreven_adres_brp: string | null;
+  reden_geen_brp: string | null;
   wijk: string | null;
   gebied: string | null;
 
@@ -89,10 +94,28 @@ export interface Kandidaat {
   whatsapp: boolean;
   eigen_vervoer: boolean;
   rijbewijs: boolean;
+  zorgverzekering: string | null;
 
   // Financieel
   uitkering: string[] | null;
   toestemming: boolean;
+
+  // Verwijzing
+  door_wie_bekend: string | null;
+
+  // Sector & certificaat voorkeur
+  gewenste_sector: string[] | null;
+  certificaat_voorkeur_1: string | null;
+  certificaat_voorkeur_2: string | null;
+
+  // Motivatie & competenties
+  motivatie: string | null;
+  demotivatie: string | null;
+  stip_aan_de_horizon: string | null;
+  goede_eigenschappen: string | null;
+  minder_goed_in: string | null;
+  talen: string | null;
+  hobbys: string | null;
 
   // Gezondheid (AVG-gevoelig)
   medische_bijzonderheden: string | null;
@@ -100,22 +123,47 @@ export interface Kandidaat {
   // Casemanagement
   klantmanager: string | null;
 
-  // Doelen
-  stip_aan_de_horizon: string | null;
+  // Thuissituatie
+  woonsituatie: string | null;
+  kinderen: string | null;
 
   // Ondersteuning
   trajecten: string | null;
   hulpverleners_betrokken: string | null;
   afspraken_hulp: string | null;
 
+  // Middelengebruik (AVG-gevoelig)
+  middelengebruik: string | null;
+
+  // Schulden
+  heeft_schulden: boolean;
+  schulden_reden_bedrag: string | null;
+  schulden_afspraken: string | null;
+
   // Justitie (AVG-gevoelig)
   aanraking_politie_justitie: boolean;
   aanraking_reden: string | null;
+  veroordeeld_detentie: string | null;
   lopende_zaken: string | null;
+
+  // Opleidingen
+  opleiding: string | null;
+  diploma_behaald: string | null;
+  opleiding_niveau: string | null;
+  reden_uitval: string | null;
+
+  // Cursussen & certificaten
+  cursussen_gevolgd: string | null;
+  certificaten_behaald: string | null;
 
   // Werkervaring
   werkervaring: string | null;
-  certificaten_behaald: string | null;
+  waarom_lukte_niet: string | null;
+  heeft_cv: boolean;
+
+  // Acties deelnemer & coach
+  acties_afspraken: string | null;
+  leefgebieden_aandacht: string | null;
 
   // Metadata
   aanmeld_datum: string | null;
