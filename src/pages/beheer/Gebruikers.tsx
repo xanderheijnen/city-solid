@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Loader2, Shield, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Shield, Trash2, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -45,6 +45,41 @@ const ROLE_COLORS: Record<CsRole, string> = {
   trainer: 'bg-green-100 text-green-700',
   manager: 'bg-purple-100 text-purple-700',
   readonly: 'bg-gray-100 text-gray-700',
+};
+
+const ROLE_RECHTEN: Record<CsRole, string[]> = {
+  admin: [
+    'Volledige toegang tot alle functies',
+    'Gebruikers aanmaken, bewerken en verwijderen',
+    'Rollen toewijzen en verwijderen',
+    'Beheerinstellingen wijzigen',
+    'Alle kandidaatgegevens inzien en bewerken',
+    'Rapportages en exports genereren',
+  ],
+  intaker: [
+    'Nieuwe kandidaten aanmelden',
+    'Intakeformulieren invullen en bewerken',
+    'Kandidaatgegevens inzien en bijwerken',
+    'Documenten uploaden bij kandidaten',
+    'Intake-rapportages exporteren',
+  ],
+  trainer: [
+    'Kandidaten in eigen groep inzien',
+    'Voortgang en aanwezigheid bijhouden',
+    'Notities toevoegen aan kandidaten',
+    'Beperkte kandidaatgegevens bewerken',
+  ],
+  manager: [
+    'Dashboard en rapportages inzien',
+    'Alle kandidaatgegevens inzien (niet bewerken)',
+    'Exports en overzichten genereren',
+    'Voortgang per traject monitoren',
+  ],
+  readonly: [
+    'Alleen-lezen toegang tot het dashboard',
+    'Kandidaatoverzichten bekijken',
+    'Geen bewerkrechten',
+  ],
 };
 
 // ---------------------------------------------------------------------------
@@ -265,6 +300,33 @@ export default function Gebruikers() {
               </TableBody>
             </Table>
           )}
+        </CardContent>
+      </Card>
+
+      {/* ── Rollenlegenda ── */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Info className="h-5 w-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold">Rollenlegenda</h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {(Object.keys(ROLE_LABELS) as CsRole[]).map((role) => (
+              <div key={role} className="rounded-lg border p-4 space-y-2">
+                <Badge variant="secondary" className={`${ROLE_COLORS[role]} text-sm`}>
+                  {ROLE_LABELS[role]}
+                </Badge>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {ROLE_RECHTEN[role].map((recht, i) => (
+                    <li key={i} className="flex items-start gap-1.5">
+                      <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-muted-foreground" />
+                      {recht}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
