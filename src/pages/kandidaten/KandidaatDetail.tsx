@@ -373,7 +373,7 @@ export default function KandidaatDetail() {
       {/* Voortgang */}
       <Card>
         <CardContent className="pt-6">
-          <VoortgangStepper currentStatus={kandidaat.traject_status} size="full" idGescand={!!kandidaat.id_scan_url} />
+          <VoortgangStepper currentStatus={kandidaat.traject_status} size="full" idGescand={!!kandidaat.id_scan_url} cvAanwezig={!!kandidaat.cv_url} />
         </CardContent>
       </Card>
 

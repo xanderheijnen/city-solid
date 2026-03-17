@@ -1,4 +1,4 @@
-import { Check, X, CreditCard } from 'lucide-react';
+import { Check, X, CreditCard, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VOORTGANG_STEPS } from '@/lib/constants';
 import type { TrajectStatus } from '@/lib/types';
@@ -9,6 +9,7 @@ interface VoortgangStepperProps {
   size?: 'compact' | 'full';
   dates?: Record<string, string>;
   idGescand?: boolean;
+  cvAanwezig?: boolean;
 }
 
 export function VoortgangStepper({
@@ -17,6 +18,7 @@ export function VoortgangStepper({
   size = 'full',
   dates,
   idGescand,
+  cvAanwezig,
 }: VoortgangStepperProps) {
   const uitgevallen = uitgevallenProp ?? currentStatus === 'uitgevallen';
   const effectiveStatus = currentStatus === 'uitgevallen' ? 'aanmelding' : currentStatus;
@@ -109,18 +111,31 @@ export function VoortgangStepper({
         })}
       </div>
 
-      {/* ID gescand indicator onder de tramlijn */}
-      {!isCompact && idGescand !== undefined && (
-        <div className="flex justify-end mt-2">
-          <div className={cn(
-            'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-            idGescand
-              ? 'bg-green-100 text-green-700 border border-green-200'
-              : 'bg-orange-100 text-orange-700 border border-orange-200',
-          )}>
-            <CreditCard className="h-3 w-3" />
-            {idGescand ? 'ID gescand' : 'ID niet gescand'}
-          </div>
+      {/* Status indicators onder de tramlijn */}
+      {!isCompact && (idGescand !== undefined || cvAanwezig !== undefined) && (
+        <div className="flex justify-end gap-2 mt-2">
+          {idGescand !== undefined && (
+            <div className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+              idGescand
+                ? 'bg-green-100 text-green-700 border border-green-200'
+                : 'bg-orange-100 text-orange-700 border border-orange-200',
+            )}>
+              <CreditCard className="h-3 w-3" />
+              {idGescand ? 'ID gescand' : 'ID niet gescand'}
+            </div>
+          )}
+          {cvAanwezig !== undefined && (
+            <div className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+              cvAanwezig
+                ? 'bg-green-100 text-green-700 border border-green-200'
+                : 'bg-orange-100 text-orange-700 border border-orange-200',
+            )}>
+              <FileText className="h-3 w-3" />
+              {cvAanwezig ? 'CV geüpload' : 'CV niet geüpload'}
+            </div>
+          )}
         </div>
       )}
     </div>
