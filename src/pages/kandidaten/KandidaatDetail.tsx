@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,6 +57,38 @@ export default function KandidaatDetail() {
         .eq('kandidaat_id', id!);
       if (error) throw error;
       return data;
+    },
+    enabled: !!id,
+  });
+
+  // Fetch certificaten (voortgang entries with type 'certificaat') for this kandidaat
+  const { data: certificaten } = useQuery({
+    queryKey: ['kandidaat-certificaten', id],
+    queryFn: async () => {
+      // First get all kandidaat_training IDs
+      const { data: kts, error: ktErr } = await supabase
+        .from('cs_kandidaat_trainingen')
+        .select('id, trainingsgroep:cs_trainingsgroepen(groepscode, training:cs_trainingen(naam))')
+        .eq('kandidaat_id', id!);
+      if (ktErr) throw ktErr;
+      if (!kts?.length) return [];
+
+      const ktIds = kts.map((kt: any) => kt.id);
+      const ktMap = Object.fromEntries(kts.map((kt: any) => [kt.id, kt]));
+
+      const { data, error } = await supabase
+        .from('cs_voortgang')
+        .select('*')
+        .in('kandidaat_training_id', ktIds)
+        .eq('type', 'certificaat')
+        .order('datum', { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []).map((c: any) => ({
+        ...c,
+        groepscode: ktMap[c.kandidaat_training_id]?.trainingsgroep?.groepscode ?? '—',
+        trainingNaam: ktMap[c.kandidaat_training_id]?.trainingsgroep?.training?.naam ?? '—',
+      }));
     },
     enabled: !!id,
   });
@@ -179,6 +211,9 @@ export default function KandidaatDetail() {
         <TabsList>
           <TabsTrigger value="persoon">Persoonsgegevens</TabsTrigger>
           <TabsTrigger value="trainingen">Trainingen ({trainingen?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="certificaten">
+            <Award className="mr-1 h-4 w-4" />Certificaten ({certificaten?.length ?? 0})
+          </TabsTrigger>
           <TabsTrigger value="notities">Notities ({notities?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="documenten">Documenten</TabsTrigger>
         </TabsList>
@@ -369,6 +404,71 @@ export default function KandidaatDetail() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Certificaten Tab ── */}
+        <TabsContent value="certificaten">
+          <div className="space-y-6">
+            {/* Voorkeurscertificaten uit intake */}
+            {(kandidaat.certificaat_voorkeur_1 || kandidaat.certificaat_voorkeur_2 || kandidaat.certificaten_behaald) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Intake — Certificaatvoorkeuren</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <dl>
+                    <InfoRow label="1e voorkeur" value={kandidaat.certificaat_voorkeur_1} />
+                    <InfoRow label="2e voorkeur" value={kandidaat.certificaat_voorkeur_2} />
+                    <InfoRow label="Eerder behaald" value={kandidaat.certificaten_behaald} />
+                  </dl>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Behaalde certificaten uit trainingen */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Behaalde Certificaten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!certificaten?.length ? (
+                  <div className="flex h-24 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
+                    Nog geen certificaten behaald in trainingen
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {certificaten.map((cert: any) => (
+                      <div key={cert.id} className="flex items-start gap-4 rounded-lg border p-4">
+                        <div className={`mt-0.5 rounded-full p-2 ${cert.behaald ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {cert.behaald ? <CheckCircle2 className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium">{cert.omschrijving}</span>
+                            <Badge variant={cert.behaald ? 'default' : 'secondary'}>
+                              {cert.behaald ? 'Behaald' : 'Niet behaald'}
+                            </Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <span>Groep: {cert.groepscode}</span>
+                            <span className="mx-2">•</span>
+                            <span>Training: {cert.trainingNaam}</span>
+                            <span className="mx-2">•</span>
+                            <span>Datum: {new Date(cert.datum).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                          </div>
+                          {cert.score != null && (
+                            <div className="mt-1 text-sm">
+                              Score: <span className="font-semibold">{cert.score}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* ── Notities Tab ── */}
