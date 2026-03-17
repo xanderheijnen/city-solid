@@ -69,10 +69,10 @@ export default function Trainingen() {
     try {
       if (editing) {
         await updateTraining.mutateAsync({ id: editing.id, ...payload });
-        toast.success('Training bijgewerkt');
+        toast.success('Certificaat bijgewerkt');
       } else {
         await createTraining.mutateAsync(payload);
-        toast.success('Training aangemaakt');
+        toast.success('Certificaat aangemaakt');
       }
       setDialogOpen(false);
     } catch (err) {
@@ -85,7 +85,7 @@ export default function Trainingen() {
     if (!confirm(`Weet je zeker dat je "${t.naam}" wilt verwijderen?`)) return;
     try {
       await deleteTraining.mutateAsync(t.id);
-      toast.success('Training verwijderd');
+      toast.success('Certificaat verwijderd');
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       toast.error('Fout: ' + msg);
@@ -95,10 +95,10 @@ export default function Trainingen() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Trainingsprogramma's</h1>
+        <h1 className="text-2xl font-bold">Certificaten</h1>
         <PermissionGate roles={['admin']}>
           <Button onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" />Nieuwe Training
+            <Plus className="mr-2 h-4 w-4" />Nieuw Certificaat
           </Button>
         </PermissionGate>
       </div>
@@ -127,7 +127,7 @@ export default function Trainingen() {
               ) : !trainingen?.length ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                    Nog geen trainingsprogramma's aangemaakt
+                    Nog geen certificaten aangemaakt
                   </TableCell>
                 </TableRow>
               ) : (
@@ -167,9 +167,9 @@ export default function Trainingen() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? 'Training Bewerken' : 'Nieuwe Training'}</DialogTitle>
+            <DialogTitle>{editing ? 'Certificaat Bewerken' : 'Nieuw Certificaat'}</DialogTitle>
             <DialogDescription>
-              {editing ? 'Pas de gegevens van de training aan.' : 'Maak een nieuw trainingsprogramma aan.'}
+              {editing ? 'Pas de gegevens van het certificaat aan.' : 'Maak een nieuw certificaat aan.'}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

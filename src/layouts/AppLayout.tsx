@@ -33,7 +33,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   nieuw: 'Nieuwe Aanmelding',
   intake: 'Intake Uitvoeren',
   trainingen: 'Trainingen',
-  programmas: "Programma's",
+  programmas: 'Certificaten',
   groepen: 'Groepen',
   voortgang: 'Voortgang & Resultaten',
   beheer: 'Beheer',

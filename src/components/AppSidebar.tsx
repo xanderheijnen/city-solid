@@ -3,7 +3,7 @@ import {
   LayoutDashboard,
   ClipboardList,
   Users,
-  GraduationCap,
+  Award,
   Layers,
   TrendingUp,
   UserCog,
@@ -55,7 +55,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'TRAININGEN',
     items: [
-      { label: "Programma's", href: '/trainingen/programmas', icon: GraduationCap },
+      { label: 'Certificaten', href: '/trainingen/programmas', icon: Award },
       { label: 'Groepen', href: '/trainingen/groepen', icon: Layers },
     ],
   },
