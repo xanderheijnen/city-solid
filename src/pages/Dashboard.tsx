@@ -12,7 +12,7 @@ import { useKandidaten } from '@/hooks/useKandidaten';
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
-import { TRAMLINE_STEPS } from '@/lib/constants';
+import { VOORTGANG_STEPS } from '@/lib/constants';
 import { exportToExcel } from '@/lib/excel';
 import type { TrajectStatus, Resultaat } from '@/lib/types';
 
@@ -91,13 +91,13 @@ export default function Dashboard() {
     return { totaal, inTraining, uitgevallen, afgerond, slagingspercentage };
   }, [kandidaten, alleTrainingen]);
 
-  const tramlijnData = useMemo(() => {
+  const voortgangData = useMemo(() => {
     if (!kandidaten?.length) return [];
     const counts: Partial<Record<TrajectStatus, number>> = {};
     kandidaten.forEach((k) => {
       counts[k.traject_status] = (counts[k.traject_status] ?? 0) + 1;
     });
-    return TRAMLINE_STEPS.map((step) => ({
+    return VOORTGANG_STEPS.map((step) => ({
       name: step.label,
       aantal: counts[step.key as TrajectStatus] ?? 0,
       fill: STATUS_COLOR_MAP[step.key as TrajectStatus] ?? '#94A3B8',
@@ -194,19 +194,18 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Tramlijn Verdeling</CardTitle>
-            <CardDescription>Kandidaten per trajectfase</CardDescription>
+            <CardTitle>Kandidaten per trajectfase</CardTitle>
           </CardHeader>
           <CardContent>
-            {tramlijnData.length > 0 ? (
+            {voortgangData.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={tramlijnData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
+                <BarChart data={voortgangData} margin={{ top: 5, right: 5, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" height={60} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                   <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
                   <Bar dataKey="aantal" radius={[4, 4, 0, 0]}>
-                    {tramlijnData.map((entry, i) => (
+                    {voortgangData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
                     ))}
                   </Bar>

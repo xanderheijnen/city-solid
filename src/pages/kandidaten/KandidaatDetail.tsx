@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import { TramlineStepper } from '@/components/TramlineStepper';
+import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaat, useDeleteKandidaatAVG } from '@/hooks/useKandidaten';
 import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNotities';
@@ -132,10 +132,10 @@ export default function KandidaatDetail() {
         </div>
       </div>
 
-      {/* Tramline */}
+      {/* Voortgang */}
       <Card>
         <CardContent className="pt-6">
-          <TramlineStepper currentStatus={kandidaat.traject_status} size="full" />
+          <VoortgangStepper currentStatus={kandidaat.traject_status} size="full" />
         </CardContent>
       </Card>
 

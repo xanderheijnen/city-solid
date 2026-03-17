@@ -257,7 +257,7 @@ export function useDeleteKandidaatAVG() {
 }
 
 // ---------------------------------------------------------------------------
-// useUpdateTrajectStatus – advance (or change) tramline step
+// useUpdateTrajectStatus – advance (or change) voortgang step
 // ---------------------------------------------------------------------------
 
 interface UpdateTrajectStatusParams {

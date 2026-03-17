@@ -63,11 +63,11 @@ export default {
   				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
   				'accent-foreground': 'hsl(var(--sidebar-accent-foreground))'
   			},
-  			tramline: {
-  				done: 'hsl(var(--tramline-done))',
-  				active: 'hsl(var(--tramline-active))',
-  				upcoming: 'hsl(var(--tramline-upcoming))',
-  				dropped: 'hsl(var(--tramline-dropped))'
+  			voortgang: {
+  				done: 'hsl(var(--voortgang-done))',
+  				active: 'hsl(var(--voortgang-active))',
+  				upcoming: 'hsl(var(--voortgang-upcoming))',
+  				dropped: 'hsl(var(--voortgang-dropped))'
   			}
   		},
   		borderRadius: {

@@ -1,9 +1,9 @@
 import type { TrajectStatus, CsRole, AanwezigheidStatus, Resultaat } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
-// Tramline steps – the linear journey each kandidaat follows
+// Voortgang steps – the linear journey each kandidaat follows
 // ---------------------------------------------------------------------------
-export const TRAMLINE_STEPS = [
+export const VOORTGANG_STEPS = [
   { key: 'aanmelding', label: 'Aanmelding', icon: 'ClipboardList' },
   { key: 'intake_gepland', label: 'Intake gepland', icon: 'CalendarCheck' },
   { key: 'intake_afgerond', label: 'Intake afgerond', icon: 'ClipboardCheck' },
@@ -13,7 +13,7 @@ export const TRAMLINE_STEPS = [
   { key: 'afronding', label: 'Afronding', icon: 'Award' },
 ] as const;
 
-export type TramlineStepKey = (typeof TRAMLINE_STEPS)[number]['key'];
+export type VoortgangStepKey = (typeof VOORTGANG_STEPS)[number]['key'];
 
 // ---------------------------------------------------------------------------
 // Status labels and badge colors

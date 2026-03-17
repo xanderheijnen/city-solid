@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { TramlineStepper } from '@/components/TramlineStepper';
+import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaten } from '@/hooks/useKandidaten';
@@ -54,7 +54,7 @@ export default function Aanmeldingen() {
                 <TableHead>Naam</TableHead>
                 <TableHead>Datum</TableHead>
                 <TableHead className="w-48">Status</TableHead>
-                <TableHead className="w-64">Tramlijn</TableHead>
+                <TableHead className="w-64">Voortgang</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -90,7 +90,7 @@ export default function Aanmeldingen() {
                       <StatusBadge status={k.traject_status} />
                     </TableCell>
                     <TableCell>
-                      <TramlineStepper currentStatus={k.traject_status} size="compact" />
+                      <VoortgangStepper currentStatus={k.traject_status} size="compact" />
                     </TableCell>
                   </TableRow>
                 ))

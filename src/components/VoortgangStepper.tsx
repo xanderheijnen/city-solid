@@ -1,31 +1,31 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TRAMLINE_STEPS } from '@/lib/constants';
+import { VOORTGANG_STEPS } from '@/lib/constants';
 import type { TrajectStatus } from '@/lib/types';
 
-interface TramlineStepperProps {
+interface VoortgangStepperProps {
   currentStatus: TrajectStatus;
   uitgevallen?: boolean;
   size?: 'compact' | 'full';
   dates?: Record<string, string>;
 }
 
-export function TramlineStepper({
+export function VoortgangStepper({
   currentStatus,
   uitgevallen: uitgevallenProp,
   size = 'full',
   dates,
-}: TramlineStepperProps) {
+}: VoortgangStepperProps) {
   const uitgevallen = uitgevallenProp ?? currentStatus === 'uitgevallen';
   const effectiveStatus = currentStatus === 'uitgevallen' ? 'aanmelding' : currentStatus;
-  const currentIndex = TRAMLINE_STEPS.findIndex(
+  const currentIndex = VOORTGANG_STEPS.findIndex(
     (s) => s.key === effectiveStatus,
   );
   const isCompact = size === 'compact';
 
   return (
     <div className={cn('flex items-center w-full', isCompact ? 'gap-0' : 'gap-0')}>
-      {TRAMLINE_STEPS.map((step, index) => {
+      {VOORTGANG_STEPS.map((step, index) => {
         const isDone = index < currentIndex && !uitgevallen;
         const isActive = index === currentIndex;
         const isDropped = uitgevallen && index === currentIndex;
@@ -40,10 +40,10 @@ export function TramlineStepper({
                 className={cn(
                   'rounded-full flex items-center justify-center border-2 transition-all',
                   isCompact ? 'h-5 w-5' : 'h-8 w-8',
-                  isDone && 'bg-tramline-done border-tramline-done text-white',
-                  isActive && !isDropped && 'bg-tramline-active border-tramline-active text-white animate-pulse-soft',
-                  isActive && !isDropped && !isCompact && 'h-10 w-10 ring-4 ring-tramline-active/20',
-                  isDropped && 'bg-tramline-dropped border-tramline-dropped text-white',
+                  isDone && 'bg-voortgang-done border-voortgang-done text-white',
+                  isActive && !isDropped && 'bg-voortgang-active border-voortgang-active text-white animate-pulse-soft',
+                  isActive && !isDropped && !isCompact && 'h-10 w-10 ring-4 ring-voortgang-active/20',
+                  isDropped && 'bg-voortgang-dropped border-voortgang-dropped text-white',
                   isUpcoming && !isAfterDrop && 'bg-muted border-muted-foreground/30 text-muted-foreground',
                   isAfterDrop && 'bg-muted border-dashed border-muted-foreground/20 text-muted-foreground/40',
                 )}
@@ -73,9 +73,9 @@ export function TramlineStepper({
                   <p
                     className={cn(
                       'text-[11px] leading-tight whitespace-nowrap',
-                      isActive && !isDropped && 'font-bold text-tramline-active',
-                      isDone && 'font-medium text-tramline-done',
-                      isDropped && 'font-bold text-tramline-dropped',
+                      isActive && !isDropped && 'font-bold text-voortgang-active',
+                      isDone && 'font-medium text-voortgang-done',
+                      isDropped && 'font-bold text-voortgang-dropped',
                       isUpcoming && 'text-muted-foreground',
                     )}
                   >
@@ -89,15 +89,15 @@ export function TramlineStepper({
             </div>
 
             {/* Track line between stops */}
-            {index < TRAMLINE_STEPS.length - 1 && (
+            {index < VOORTGANG_STEPS.length - 1 && (
               <div
                 className={cn(
                   'flex-1 mx-1',
                   isCompact ? 'h-0.5' : 'h-1 -mt-4',
-                  isDone && 'bg-tramline-done',
-                  isActive && 'bg-gradient-to-r from-tramline-active to-tramline-upcoming',
-                  isUpcoming && !isAfterDrop && 'bg-tramline-upcoming/40',
-                  isAfterDrop && 'bg-tramline-dropped/20 border-t-2 border-dashed border-tramline-dropped/30 h-0',
+                  isDone && 'bg-voortgang-done',
+                  isActive && 'bg-gradient-to-r from-voortgang-active to-voortgang-upcoming',
+                  isUpcoming && !isAfterDrop && 'bg-voortgang-upcoming/40',
+                  isAfterDrop && 'bg-voortgang-dropped/20 border-t-2 border-dashed border-voortgang-dropped/30 h-0',
                 )}
               />
             )}

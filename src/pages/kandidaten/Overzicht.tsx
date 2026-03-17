@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Download, Loader2 } from 'lucide-react';
+import { Search, Download, Loader2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -9,12 +9,15 @@ import {
 } from '@/components/ui/table';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StatusBadge } from '@/components/StatusBadge';
+import { PermissionGate } from '@/components/PermissionGate';
+import { KandidaatUploadDialog } from '@/components/KandidaatUploadDialog';
 import { useKandidaten } from '@/hooks/useKandidaten';
 import { GESLACHT_LABELS } from '@/lib/constants';
 import type { Geslacht } from '@/lib/types';
 
 export default function KandidatenOverzicht() {
   const [search, setSearch] = useState('');
+  const [uploadOpen, setUploadOpen] = useState(false);
   const { data: kandidaten, isLoading } = useKandidaten(
     search ? { search } : undefined,
   );
@@ -23,10 +26,18 @@ export default function KandidatenOverzicht() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Kandidaten Overzicht</h1>
-        <Button variant="outline" disabled>
-          <Download className="mr-2 h-4 w-4" />
-          Export Excel
-        </Button>
+        <div className="flex items-center gap-2">
+          <PermissionGate roles={['admin', 'intaker']}>
+            <Button onClick={() => setUploadOpen(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Importeren
+            </Button>
+          </PermissionGate>
+          <Button variant="outline" disabled>
+            <Download className="mr-2 h-4 w-4" />
+            Export Excel
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -109,6 +120,9 @@ export default function KandidatenOverzicht() {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      {/* Upload Dialog */}
+      <KandidaatUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
     </div>
   );
 }
