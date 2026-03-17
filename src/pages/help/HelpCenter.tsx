@@ -367,6 +367,12 @@ const FAQ_ITEMS: FAQItem[] = [
     tags: ['trajectfase', 'fase', 'voortgang', 'status', 'aangemeld', 'geplaatst'],
   },
   {
+    question: 'Wat betekent "Intake gedaan"?',
+    answer: 'Wanneer een kandidaat de status "Intake" heeft, betekent dit dat het intakegesprek is afgerond. Tijdens de intake worden 14 secties ingevuld: persoonlijke gegevens, adres, contact, financieel, sectorvoorkeur, motivatie, thuissituatie, gezondheid, schulden, justitieel verleden, opleidingen, cursussen, werkervaring en acties/afspraken. Na de intake gaat de kandidaat door naar de Training-fase.',
+    category: 'Kandidaten',
+    tags: ['intake', 'gedaan', 'afgerond', 'status', 'betekent', 'fase'],
+  },
+  {
     question: 'Ik ben mijn wachtwoord vergeten. Wat nu?',
     answer: 'Neem contact op met een beheerder (admin). Zij kunnen je wachtwoord resetten via het gebruikersbeheer.',
     category: 'Account',
@@ -435,22 +441,59 @@ function buildKnowledgeBase() {
 
 const KNOWLEDGE_BASE = buildKnowledgeBase();
 
+// Stopwoorden die geen betekenis toevoegen aan de zoekopdracht
+const STOPWORDS = new Set([
+  'wat', 'hoe', 'wie', 'waar', 'wanneer', 'waarom', 'welke', 'welk',
+  'een', 'het', 'de', 'van', 'voor', 'met', 'aan', 'uit', 'bij', 'als',
+  'dan', 'dat', 'die', 'dit', 'zijn', 'kan', 'kun', 'mag', 'moet',
+  'ben', 'bent', 'wordt', 'worden', 'naar', 'toe', 'ook', 'nog', 'wel',
+  'niet', 'geen', 'meer', 'alle', 'erg', 'veel', 'heel', 'zeer',
+  'betekend', 'betekent', 'bedoel', 'bedoelt', 'wil', 'graag', 'even',
+]);
+
 function searchKnowledge(query: string): { text: string; source: string }[] {
-  const q = query.toLowerCase().replace(/[?!.,]/g, '');
-  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  const q = query.toLowerCase().replace(/[?!.,;:'"()]/g, '');
+  const allWords = q.split(/\s+/).filter((w) => w.length > 1);
+  // Contentwoorden (zonder stopwoorden) voor scoring
+  const contentWords = allWords.filter((w) => !STOPWORDS.has(w));
+  // Als alle woorden stopwoorden zijn, gebruik dan alle woorden
+  const words = contentWords.length > 0 ? contentWords : allWords.filter((w) => w.length > 2);
+
+  if (words.length === 0) return [];
 
   const scored = KNOWLEDGE_BASE.map((entry) => {
     const entryText = (entry.text + ' ' + entry.tags.join(' ')).toLowerCase();
+    const titleText = entry.text.split('\n')[0].toLowerCase();
     let score = 0;
+    let matchedWords = 0;
 
-    // Exact phrase match in text
-    if (entryText.includes(q)) score += 10;
+    // Volledige zin match in tekst (sterkste signaal)
+    if (entryText.includes(q)) score += 20;
 
-    // Individual word matches
     for (const word of words) {
-      if (entryText.includes(word)) score += 2;
-      // Tag match is worth more
-      if (entry.tags.some((t) => t.includes(word))) score += 3;
+      const inText = entryText.includes(word);
+      const inTitle = titleText.includes(word);
+      const inTag = entry.tags.some((t) => t.includes(word) || word.includes(t));
+
+      if (inText || inTag) matchedWords++;
+
+      // Titel-match is het sterkste signaal
+      if (inTitle) score += 8;
+      // Tag-match is ook sterk (tags zijn handmatig gekozen kernwoorden)
+      if (inTag) score += 6;
+      // Gewone tekst-match
+      if (inText) score += 2;
+    }
+
+    // Bonus als een groot deel van de zoekwoorden matcht (relevantie)
+    if (words.length > 0) {
+      const coverage = matchedWords / words.length;
+      score *= (0.5 + coverage); // 50% basis + tot 50% bonus bij volledige dekking
+    }
+
+    // Straf voor entries die maar 1 woord matchen bij meerdere zoekwoorden
+    if (words.length >= 2 && matchedWords <= 1) {
+      score *= 0.3;
     }
 
     return { ...entry, score };
