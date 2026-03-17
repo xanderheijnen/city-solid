@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaat, useUpdateKandidaat, useDeleteKandidaatAVG, useUpdateTrajectStatus } from '@/hooks/useKandidaten';
 import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNotities';
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
+import { useFileUpload } from '@/hooks/useFileUpload';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
 import type { Geslacht, Notitie, Resultaat } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -263,6 +264,38 @@ export default function KandidaatDetail() {
     }
   };
 
+  // ── File uploads ──
+  const { upload: uploadFile, uploading: fileUploading } = useFileUpload();
+  const fotoInputRef = useRef<HTMLInputElement>(null);
+  const idScanInputRef = useRef<HTMLInputElement>(null);
+  const cvInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (file: File, folder: 'foto' | 'id-scan' | 'cv', fieldName: 'foto_url' | 'id_scan_url' | 'cv_url') => {
+    if (!id) return;
+    try {
+      const result = await uploadFile(file, id, folder);
+      await updateKandidaat.mutateAsync({ id, [fieldName]: result.path });
+      toast.success(
+        folder === 'foto' ? 'Foto geüpload' :
+        folder === 'id-scan' ? 'ID scan geüpload' :
+        'CV geüpload'
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : JSON.stringify(err);
+      toast.error('Upload fout: ' + msg);
+    }
+  };
+
+  const handleRemoveFile = async (fieldName: 'foto_url' | 'id_scan_url' | 'cv_url') => {
+    if (!id) return;
+    try {
+      await updateKandidaat.mutateAsync({ id, [fieldName]: null });
+      toast.success('Bestand verwijderd');
+    } catch (err) {
+      toast.error('Fout bij verwijderen');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -288,16 +321,59 @@ export default function KandidaatDetail() {
         <Button variant="ghost" size="icon" asChild>
           <Link to="/kandidaten/overzicht"><ArrowLeft className="h-4 w-4" /></Link>
         </Button>
+        {/* Foto */}
+        <div
+          className="relative h-16 w-16 rounded-full bg-muted flex items-center justify-center overflow-hidden border-2 border-muted-foreground/20 cursor-pointer group shrink-0"
+          onClick={() => fotoInputRef.current?.click()}
+          title="Klik om foto te uploaden"
+        >
+          {kandidaat.foto_url ? (
+            <img
+              src={kandidaat.foto_url}
+              alt={`${kandidaat.voornaam} ${kandidaat.achternaam}`}
+              className="h-full w-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <Camera className="h-6 w-6 text-muted-foreground" />
+          )}
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <Upload className="h-5 w-5 text-white" />
+          </div>
+          <input
+            ref={fotoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleFileUpload(file, 'foto', 'foto_url');
+              e.target.value = '';
+            }}
+          />
+        </div>
         <div>
           <h1 className="text-2xl font-bold">{kandidaat.voornaam} {kandidaat.achternaam}</h1>
           <p className="text-sm text-muted-foreground font-mono">{kandidaat.display_id}</p>
+          <div className="flex items-center gap-2 mt-1">
+            {kandidaat.id_scan_url && (
+              <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50 text-xs">
+                <CreditCard className="mr-1 h-3 w-3" />ID gescand
+              </Badge>
+            )}
+            {kandidaat.cv_url && (
+              <Badge variant="outline" className="text-blue-700 border-blue-300 bg-blue-50 text-xs">
+                <File className="mr-1 h-3 w-3" />CV aanwezig
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Voortgang */}
       <Card>
         <CardContent className="pt-6">
-          <VoortgangStepper currentStatus={kandidaat.traject_status} size="full" />
+          <VoortgangStepper currentStatus={kandidaat.traject_status} size="full" idGescand={!!kandidaat.id_scan_url} />
         </CardContent>
       </Card>
 
@@ -703,12 +779,133 @@ export default function KandidaatDetail() {
         </TabsContent>
 
         <TabsContent value="documenten">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Documenten & Exports</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Bestanden uploaden */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Bestanden</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {/* Foto */}
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <Camera className="h-4 w-4" />Pasfoto
+                    </div>
+                    {kandidaat.foto_url ? (
+                      <div className="space-y-2">
+                        <div className="h-32 w-full rounded-lg bg-muted overflow-hidden">
+                          <img src={kandidaat.foto_url} alt="Foto" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => fotoInputRef.current?.click()}>
+                            Vervangen
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('foto_url')}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed hover:border-primary hover:bg-muted/50 transition-colors"
+                        onClick={() => fotoInputRef.current?.click()}
+                      >
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="mx-auto h-6 w-6 mb-1" />
+                          <span className="text-xs">Upload foto</span>
+                        </div>
+                      </div>
+                    )}
+                    <input ref={fotoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, 'foto', 'foto_url'); e.target.value = ''; }} />
+                  </div>
+
+                  {/* ID Scan */}
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <CreditCard className="h-4 w-4" />ID Scan
+                    </div>
+                    {kandidaat.id_scan_url ? (
+                      <div className="space-y-2">
+                        <div className="flex h-32 items-center justify-center rounded-lg bg-green-50 border border-green-200">
+                          <div className="text-center">
+                            <CheckCircle2 className="mx-auto h-8 w-8 text-green-600 mb-1" />
+                            <span className="text-xs text-green-700 font-medium">ID gescand</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => idScanInputRef.current?.click()}>
+                            Vervangen
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('id_scan_url')}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed hover:border-primary hover:bg-muted/50 transition-colors"
+                        onClick={() => idScanInputRef.current?.click()}
+                      >
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="mx-auto h-6 w-6 mb-1" />
+                          <span className="text-xs">Upload ID scan</span>
+                        </div>
+                      </div>
+                    )}
+                    <input ref={idScanInputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, 'id-scan', 'id_scan_url'); e.target.value = ''; }} />
+                  </div>
+
+                  {/* CV */}
+                  <div className="rounded-lg border p-4 space-y-3">
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                      <File className="h-4 w-4" />CV
+                    </div>
+                    {kandidaat.cv_url ? (
+                      <div className="space-y-2">
+                        <div className="flex h-32 items-center justify-center rounded-lg bg-blue-50 border border-blue-200">
+                          <div className="text-center">
+                            <CheckCircle2 className="mx-auto h-8 w-8 text-blue-600 mb-1" />
+                            <span className="text-xs text-blue-700 font-medium">CV aanwezig</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => cvInputRef.current?.click()}>
+                            Vervangen
+                          </Button>
+                          <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('cv_url')}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="flex h-32 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed hover:border-primary hover:bg-muted/50 transition-colors"
+                        onClick={() => cvInputRef.current?.click()}
+                      >
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="mx-auto h-6 w-6 mb-1" />
+                          <span className="text-xs">Upload CV</span>
+                        </div>
+                      </div>
+                    )}
+                    <input ref={cvInputRef} type="file" accept=".pdf,.doc,.docx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f, 'cv', 'cv_url'); e.target.value = ''; }} />
+                  </div>
+                </div>
+                {fileUploading && (
+                  <div className="flex items-center gap-2 mt-3 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />Bestand uploaden...
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Exports */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Exports</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Button
                     variant="outline"
@@ -736,7 +933,6 @@ export default function KandidaatDetail() {
                       if (!trainingen?.length) return;
                       const t = trainingen[0] as any;
                       try {
-                        // Fetch aanwezigheid & voortgang for the first training
                         const { data: aanw } = await supabase
                           .from('cs_aanwezigheid')
                           .select('datum, status')
@@ -767,9 +963,9 @@ export default function KandidaatDetail() {
                     </div>
                   </Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 

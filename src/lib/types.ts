@@ -172,6 +172,11 @@ export interface Kandidaat {
   acties_afspraken: string | null;
   leefgebieden_aandacht: string | null;
 
+  // Bestanden (Supabase Storage URLs)
+  foto_url: string | null;
+  id_scan_url: string | null;
+  cv_url: string | null;
+
   // Metadata
   aanmeld_datum: string | null;
   intake_datum: string | null;
