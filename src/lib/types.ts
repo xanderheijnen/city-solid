@@ -175,6 +175,13 @@ export interface Kandidaat {
   // Uitstroom
   uitstroom_status: string | null;
 
+  // Rapportage velden
+  activiteit: string | null;
+  csn: string | null;
+  no_show: boolean;
+  eenoudergezin: boolean;
+  verandering: string | null;
+
   // Bestanden (Supabase Storage URLs)
   foto_url: string | null;
   id_scan_url: string | null;
@@ -396,4 +403,38 @@ export interface TrainingsgroepFilters {
   training_id?: string;
   status?: Trainingsgroep['status'];
   trainer_id?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Rapportage types
+// ---------------------------------------------------------------------------
+
+export type UitstroomRubriek = 'uitstroom' | 'in_proces' | 'uitval';
+
+export interface UitstroomRubriekMapping {
+  id: string;
+  uitstroom_waarde: string;
+  rubriek: UitstroomRubriek;
+  toon_in_grafieken: boolean;
+  created_at: string;
+}
+
+export interface ImportLogEntry {
+  id: string;
+  bestandsnaam: string;
+  bron: string;
+  aantal_rijen: number;
+  aantal_succesvol: number;
+  aantal_mislukt: number;
+  fouten: unknown[];
+  activiteit: string | null;
+  geimporteerd_door: string | null;
+  created_at: string;
+}
+
+export interface DeelnemerRapportage extends Kandidaat {
+  certificaten_lijst: { naam: string; behaald: boolean }[];
+  aantal_certificaten: number;
+  aantal_gezakt: number;
+  uitstroom_rubriek: UitstroomRubriek | null;
 }

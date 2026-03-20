@@ -23,6 +23,17 @@ import Opties from '@/pages/beheer/Opties';
 import AuditLog from '@/pages/beheer/AuditLog';
 import HelpCenter from '@/pages/help/HelpCenter';
 
+// Rapportage pages
+import RapportageDashboard from '@/pages/rapportage/RapportageDashboard';
+import RapportageDeelnemers from '@/pages/rapportage/RapportageDeelnemers';
+import RapportageVisueel from '@/pages/rapportage/RapportageVisueel';
+import RapportageEind from '@/pages/rapportage/RapportageEind';
+import RapportageAI from '@/pages/rapportage/RapportageAI';
+import RapportageGebiedskaart from '@/pages/rapportage/RapportageGebiedskaart';
+import RapportageImportLog from '@/pages/rapportage/RapportageImportLog';
+import RapportageRubrieken from '@/pages/rapportage/RapportageRubrieken';
+import RapportageInstructies from '@/pages/rapportage/RapportageInstructies';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -73,6 +84,17 @@ export default function App() {
               <Route path="/beheer/gebruikers" element={<Gebruikers />} />
               <Route path="/beheer/opties" element={<Opties />} />
               <Route path="/beheer/audit" element={<AuditLog />} />
+
+              {/* Rapportage */}
+              <Route path="/rapportage/dashboard" element={<RapportageDashboard />} />
+              <Route path="/rapportage/deelnemers" element={<RapportageDeelnemers />} />
+              <Route path="/rapportage/rapport" element={<RapportageVisueel />} />
+              <Route path="/rapportage/eindrapport" element={<RapportageEind />} />
+              <Route path="/rapportage/ai-rapport" element={<RapportageAI />} />
+              <Route path="/rapportage/gebiedskaart" element={<RapportageGebiedskaart />} />
+              <Route path="/rapportage/import-log" element={<RapportageImportLog />} />
+              <Route path="/rapportage/rubrieken" element={<RapportageRubrieken />} />
+              <Route path="/rapportage/instructies" element={<RapportageInstructies />} />
 
               {/* Help */}
               <Route path="/help" element={<HelpCenter />} />

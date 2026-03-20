@@ -10,6 +10,14 @@ import {
   List,
   FileText,
   HelpCircle,
+  BarChart3,
+  FileBarChart,
+  FileCheck,
+  Sparkles,
+  MapPin,
+  Upload,
+  Tag,
+  Info,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -63,6 +71,20 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'VOORTGANG',
     items: [
       { label: 'Voortgang & Resultaten', href: '/voortgang', icon: TrendingUp },
+    ],
+  },
+  {
+    title: 'RAPPORTAGE',
+    items: [
+      { label: 'Dashboard', href: '/rapportage/dashboard', icon: BarChart3 },
+      { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
+      { label: 'Rapportage', href: '/rapportage/rapport', icon: FileBarChart },
+      { label: 'Eindrapportage', href: '/rapportage/eindrapport', icon: FileCheck },
+      { label: 'AI Rapport', href: '/rapportage/ai-rapport', icon: Sparkles },
+      { label: 'Gebiedskaart', href: '/rapportage/gebiedskaart', icon: MapPin },
+      { label: 'Import Log', href: '/rapportage/import-log', icon: Upload },
+      { label: 'Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
+      { label: 'Instructies', href: '/rapportage/instructies', icon: Info },
     ],
   },
   {
