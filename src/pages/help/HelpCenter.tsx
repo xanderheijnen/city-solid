@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import {
   Book, HelpCircle, MessageCircle, Search, ChevronDown, ChevronRight,
   Send, Bot, User, LayoutDashboard, ClipboardList, Users, GraduationCap,
-  TrendingUp, UserCog, Upload, FileText, Shield,
+  TrendingUp, UserCog, Upload, FileText, Shield, BarChart3,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -260,6 +260,95 @@ Je kunt rollen toewijzen of verwijderen via de **"Rol"**-knop naast elke gebruik
     ],
   },
   {
+    id: 'rapportage',
+    title: 'Rapportage',
+    icon: BarChart3,
+    content: [
+      {
+        title: 'Rapportage Dashboard',
+        body: `Het **Rapportage Dashboard** (Rapportage → Dashboard) biedt een visueel overzicht van alle deelnemersdata:
+
+• **Pipeline overzicht** — toont de doorstroom in 4 stappen: Instroom → Gestarte trajecten → In Proces → Uitstroom
+• **Top 6 gebieden** — donut-grafieken met de meest voorkomende Rotterdamse gebieden
+• **Statistiekkaarten** — meest voorkomende opleiding, % geen BRP, % justitie, % uitkering, gemiddelde leeftijd en man/vrouw verdeling
+• **Wisselbare grafieken** — 6 grafieken (leeftijd, geslacht, uitkering, opleiding, organisatie, sector) met 5 weergavemodi per grafiek
+
+Gebruik het **activiteitenfilter** rechtsboven om te filteren op een specifieke activiteit (bijv. BIROTA, CWST). Dit filter werkt op alle rapportagepagina's.`,
+        tags: ['rapportage', 'dashboard', 'pipeline', 'grafieken', 'statistieken', 'activiteit', 'filter'],
+      },
+      {
+        title: 'Deelnemers tabel',
+        body: `De **Deelnemers** pagina (Rapportage → Deelnemers) toont een brede, scrollbare tabel met alle kandidaatgegevens:
+
+• Kolommen: Activiteit, CSN, Uitstroom, Wijk, Gebied, Uitkering, Leeftijd, Geslacht, Opleiding, Woonplaats, Ingeschreven, Sector, No-show, Eenoudergezin, Certificaten (1-5), # Cert, # Gezakt
+• **Zoeken** — zoek op CSN, wijk, organisatie of uitstroom
+• **Toevoegen** — voeg handmatig een deelnemer toe
+• **Import Excel** — importeer deelnemers vanuit een Excel-bestand
+• **Export Excel** — exporteer de huidige tabel naar CSV
+• **Bewerken** — klik op een rij om gegevens aan te passen
+• **Alles verwijderen** — verwijder alle deelnemers (met bevestiging)`,
+        tags: ['deelnemers', 'tabel', 'zoeken', 'importeren', 'exporteren', 'excel', 'csv', 'certificaten'],
+      },
+      {
+        title: 'Visuele Rapportage',
+        body: `De **Rapportage** pagina (Rapportage → Rapportage) toont een visueel rapport met:
+
+• **Samenvatting** — automatisch gegenereerde tekst met kerngegevens
+• **Demografisch overzicht** — leeftijdsverdeling (balkdiagram), geslacht, uitstroomstatus en overige kenmerken
+• **Opleiding en Status** — opleidingsniveau, justitie, uitkering en aanmeldende organisaties
+• **Certificaten KPI's** — totaal behaald, totaal gezakt en slagingspercentage
+
+Alle data wordt automatisch berekend op basis van de deelnemersgegevens.`,
+        tags: ['rapportage', 'visueel', 'demografie', 'certificaten', 'kpi', 'slagingspercentage'],
+      },
+      {
+        title: 'Eindrapportage (PmG)',
+        body: `De **Eindrapportage** pagina (Rapportage → Eindrapportage) genereert een formeel PmG-document:
+
+• Gestructureerde secties: Feiten & Cijfers, Gebieden, Aanmelders, Deelnemersinfo, Certificaten, Uitstroom
+• City Solid branding per sectie
+• **Printen/PDF** — klik op de "Printen" knop om het rapport af te drukken of als PDF op te slaan via het printvenster van je browser`,
+        tags: ['eindrapportage', 'pmg', 'printen', 'pdf', 'formeel', 'rapport'],
+      },
+      {
+        title: 'AI Rapportage',
+        body: `De **AI Rapport** pagina (Rapportage → AI Rapport) genereert een tekstueel rapport op basis van de deelnemersdata:
+
+• **Prompt aanpassen** — pas de instructie aan om het rapport naar wens te genereren
+• **Rapport genereren** — klik op de knop om een samenvatting te maken
+• **Donut-grafieken** — leeftijdsverdeling en geslacht worden visueel weergegeven onder het rapport`,
+        tags: ['ai', 'rapport', 'genereren', 'prompt', 'samenvatting'],
+      },
+      {
+        title: 'Gebiedskaart Rotterdam',
+        body: `De **Gebiedskaart** pagina (Rapportage → Gebiedskaart) toont alle 14 Rotterdamse gebieden:
+
+• **Gebiedskaarten** — klik op een gebied om details te bekijken (deelnemers, certificaten, aan het werk, op school)
+• **Totaaloverzicht** — totaal deelnemers, certificaten behaald, aan het werk en op school
+• **Ranking** — gebieden gerangschikt op aantal deelnemers`,
+        tags: ['gebiedskaart', 'rotterdam', 'gebied', 'kaart', 'ranking'],
+      },
+      {
+        title: 'Uitstroom Rubrieken',
+        body: `De **Rubrieken** pagina (Rapportage → Rubrieken) beheert de koppeling tussen uitstroomwaarden en categorieën:
+
+• **Rubrieken** — koppel elke uitstroomwaarde aan een rubriek: Uitstroom, In proces of Uitval
+• **Toon in grafieken** — schakel per rubriek in of uit of deze meetelt in de rapportagegrafieken
+• **Niet-gekoppelde waarden** — worden bovenaan getoond met de optie om ze toe te voegen of als "niet meetellen" te markeren
+• **Nieuwe waarden** — voeg handmatig nieuwe uitstroomwaarden toe`,
+        tags: ['rubrieken', 'uitstroom', 'koppeling', 'grafieken', 'uitval', 'in proces'],
+      },
+      {
+        title: 'Import Logboek',
+        body: `De **Import Log** pagina (Rapportage → Import Log) toont de geschiedenis van alle Excel-imports:
+
+• Bestandsnaam, bron, aantal rijen, succesvol, mislukt en datum
+• Handig om te controleren of een import correct is verlopen`,
+        tags: ['import', 'log', 'logboek', 'excel', 'geschiedenis'],
+      },
+    ],
+  },
+  {
     id: 'export',
     title: 'Exports & Rapporten',
     icon: FileText,
@@ -418,6 +507,42 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: 'Open de kandidaat-detailpagina en ga naar het tab "Uitstroom". Hier kun je de uitstroomstatus instellen (bijv. Werk, School, Lopend, Vrijwilligerswerk, Garantiebaan, Beschut werk, Binnen, No-show of Uitval). Je kunt ook gespreksupdates toevoegen met datum, tijd en inhoud om het uitstroomproces te documenteren.',
     category: 'Kandidaten',
     tags: ['uitstroom', 'status', 'gesprek', 'update', 'werk', 'school'],
+  },
+  {
+    question: 'Hoe gebruik ik het activiteitenfilter in de rapportage?',
+    answer: 'Rechtsboven op elke rapportagepagina staat een dropdown "Alle activiteiten". Selecteer een activiteit (bijv. BIROTA of CWST) om alleen de deelnemers van die activiteit te tonen. Het filter werkt op alle rapportagepagina\'s.',
+    category: 'Rapportage',
+    tags: ['activiteit', 'filter', 'rapportage', 'dropdown'],
+  },
+  {
+    question: 'Hoe exporteer ik de deelnemerstabel naar Excel?',
+    answer: 'Ga naar Rapportage → Deelnemers en klik op de knop "Export Excel". De huidige tabelgegevens worden gedownload als CSV-bestand dat je kunt openen in Excel.',
+    category: 'Rapportage',
+    tags: ['export', 'excel', 'csv', 'deelnemers', 'rapportage'],
+  },
+  {
+    question: 'Hoe importeer ik deelnemers vanuit Excel?',
+    answer: 'Ga naar Rapportage → Deelnemers en klik op "Import Excel". Selecteer een .xlsx of .xls bestand. Het systeem herkent de kolommen en importeert de data. Controleer achteraf de Import Log pagina voor eventuele fouten.',
+    category: 'Rapportage',
+    tags: ['import', 'excel', 'deelnemers', 'rapportage', 'xlsx'],
+  },
+  {
+    question: 'Wat zijn uitstroom rubrieken en hoe beheer ik ze?',
+    answer: 'Uitstroom rubrieken koppelen uitstroomwaarden (bijv. "werk", "school", "uitval") aan categorieën: Uitstroom, In proces of Uitval. Ga naar Rapportage → Rubrieken om de koppeling te beheren. Je kunt per rubriek instellen of deze meetelt in de grafieken via de toggle "Toon in grafieken".',
+    category: 'Rapportage',
+    tags: ['rubrieken', 'uitstroom', 'categorie', 'grafieken', 'beheren'],
+  },
+  {
+    question: 'Hoe genereer ik een eindrapportage voor PmG?',
+    answer: 'Ga naar Rapportage → Eindrapportage. Selecteer eventueel een activiteit en klik op "Printen" om het rapport af te drukken of als PDF op te slaan. Het rapport bevat secties over feiten & cijfers, gebieden, aanmelders, deelnemersinfo, certificaten en uitstroom.',
+    category: 'Rapportage',
+    tags: ['eindrapportage', 'pmg', 'printen', 'pdf', 'rapport'],
+  },
+  {
+    question: 'Hoe werkt de AI rapportage?',
+    answer: 'Ga naar Rapportage → AI Rapport. Pas eventueel de prompt aan en klik op "Rapport genereren". Het systeem maakt een tekstuele samenvatting op basis van de deelnemersdata. Onder het rapport worden donut-grafieken getoond voor leeftijd en geslacht.',
+    category: 'Rapportage',
+    tags: ['ai', 'rapport', 'genereren', 'samenvatting', 'prompt'],
   },
   {
     question: 'Is de data beveiligd?',
