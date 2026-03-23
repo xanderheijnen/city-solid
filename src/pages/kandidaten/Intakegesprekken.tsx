@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search, Loader2, CalendarCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
@@ -9,28 +8,27 @@ import {
 } from '@/components/ui/table';
 import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { StatusBadge } from '@/components/StatusBadge';
-import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaten } from '@/hooks/useKandidaten';
 
-export default function Aanmeldingen() {
+export default function Intakegesprekken() {
   const [search, setSearch] = useState('');
   const { data: kandidaten, isLoading } = useKandidaten({
     ...(search ? { search } : {}),
-    traject_status: 'aanmelding',
+    traject_status: ['intake_gepland', 'intake_afgerond'],
   });
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Aanmeldingen</h1>
-        <PermissionGate roles={['admin', 'intaker']}>
-          <Button asChild>
-            <Link to="/kandidaten/aanmeldingen/nieuw">
-              <Plus className="mr-2 h-4 w-4" />
-              Nieuwe Aanmelding
-            </Link>
-          </Button>
-        </PermissionGate>
+        <div className="flex items-center gap-3">
+          <CalendarCheck className="h-7 w-7 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold">Intakegesprekken</h1>
+            <p className="text-sm text-muted-foreground">
+              Kandidaten met een gepland of afgerond intakegesprek
+            </p>
+          </div>
+        </div>
       </div>
 
       <Card>
@@ -54,12 +52,12 @@ export default function Aanmeldingen() {
                 <TableHead className="w-24">ID</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead>Telefoon</TableHead>
+                <TableHead>Intake datum</TableHead>
+                <TableHead>Intake tijd</TableHead>
                 <TableHead>Aanmelder</TableHead>
                 <TableHead>Organisatie</TableHead>
                 <TableHead>Project</TableHead>
-                <TableHead>Aanmelddatum</TableHead>
-                <TableHead>Intake datum</TableHead>
-                <TableHead className="w-48">Status</TableHead>
+                <TableHead className="w-40">Status</TableHead>
                 <TableHead className="w-64">Voortgang</TableHead>
               </TableRow>
             </TableHeader>
@@ -73,7 +71,7 @@ export default function Aanmeldingen() {
               ) : !kandidaten?.length ? (
                 <TableRow>
                   <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
-                    Nog geen aanmeldingen. Klik op "Nieuwe Aanmelding" om te beginnen.
+                    Geen intakegesprekken gevonden.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -92,6 +90,12 @@ export default function Aanmeldingen() {
                     <TableCell className="text-muted-foreground text-sm">
                       {k.telefoon ?? '—'}
                     </TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {k.intake_datum ?? '—'}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {k.intake_tijd ?? '—'}
+                    </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {k.aanmelder_naam || k.door_wie_bekend || '—'}
                     </TableCell>
@@ -100,17 +104,6 @@ export default function Aanmeldingen() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {k.gewenst_project?.join(', ') ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {k.aanmeld_datum ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {k.intake_datum ? (
-                        <span>
-                          {k.intake_datum}
-                          {k.intake_tijd ? <span className="ml-1 text-xs">({k.intake_tijd})</span> : null}
-                        </span>
-                      ) : '—'}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={k.traject_status} />

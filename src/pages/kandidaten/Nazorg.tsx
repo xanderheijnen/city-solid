@@ -1,36 +1,32 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Search, Loader2, HeartHandshake } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
-import { VoortgangStepper } from '@/components/VoortgangStepper';
 import { StatusBadge } from '@/components/StatusBadge';
-import { PermissionGate } from '@/components/PermissionGate';
 import { useKandidaten } from '@/hooks/useKandidaten';
 
-export default function Aanmeldingen() {
+export default function Nazorg() {
   const [search, setSearch] = useState('');
+  // Nazorg = kandidaten die in de afronding zitten (trainingen/certificaten afgerond, maar worden nog gevolgd)
   const { data: kandidaten, isLoading } = useKandidaten({
     ...(search ? { search } : {}),
-    traject_status: 'aanmelding',
+    traject_status: 'afronding',
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Aanmeldingen</h1>
-        <PermissionGate roles={['admin', 'intaker']}>
-          <Button asChild>
-            <Link to="/kandidaten/aanmeldingen/nieuw">
-              <Plus className="mr-2 h-4 w-4" />
-              Nieuwe Aanmelding
-            </Link>
-          </Button>
-        </PermissionGate>
+      <div className="flex items-center gap-3">
+        <HeartHandshake className="h-7 w-7 text-primary" />
+        <div>
+          <h1 className="text-2xl font-bold">Nazorg</h1>
+          <p className="text-sm text-muted-foreground">
+            Kandidaten die trainingen en certificaten hebben afgerond en worden gevolgd
+          </p>
+        </div>
       </div>
 
       <Card>
@@ -54,26 +50,24 @@ export default function Aanmeldingen() {
                 <TableHead className="w-24">ID</TableHead>
                 <TableHead>Naam</TableHead>
                 <TableHead>Telefoon</TableHead>
-                <TableHead>Aanmelder</TableHead>
-                <TableHead>Organisatie</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Aanmelddatum</TableHead>
-                <TableHead>Intake datum</TableHead>
-                <TableHead className="w-48">Status</TableHead>
-                <TableHead className="w-64">Voortgang</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead>Wijk</TableHead>
+                <TableHead>Uitstroom status</TableHead>
+                <TableHead>Klantmanager</TableHead>
+                <TableHead className="w-40">Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="h-32 text-center">
+                  <TableCell colSpan={8} className="h-32 text-center">
                     <Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" />
                   </TableCell>
                 </TableRow>
               ) : !kandidaten?.length ? (
                 <TableRow>
-                  <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
-                    Nog geen aanmeldingen. Klik op "Nieuwe Aanmelding" om te beginnen.
+                  <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                    Geen kandidaten in nazorg.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -93,30 +87,19 @@ export default function Aanmeldingen() {
                       {k.telefoon ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {k.aanmelder_naam || k.door_wie_bekend || '—'}
+                      {k.email ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {k.aanmeld_organisatie ?? '—'}
+                      {k.wijk ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {k.gewenst_project?.join(', ') ?? '—'}
+                      {k.uitstroom_status ?? '—'}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
-                      {k.aanmeld_datum ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
-                      {k.intake_datum ? (
-                        <span>
-                          {k.intake_datum}
-                          {k.intake_tijd ? <span className="ml-1 text-xs">({k.intake_tijd})</span> : null}
-                        </span>
-                      ) : '—'}
+                      {k.klantmanager ?? '—'}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={k.traject_status} />
-                    </TableCell>
-                    <TableCell>
-                      <VoortgangStepper currentStatus={k.traject_status} size="compact" />
                     </TableCell>
                   </TableRow>
                 ))

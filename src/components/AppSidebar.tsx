@@ -17,6 +17,9 @@ import {
   MapPin,
   Upload,
   Tag,
+  CalendarCheck,
+  GraduationCap,
+  HeartHandshake,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -53,25 +56,32 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'KANDIDATEN',
+    title: null,
     items: [
       { label: 'Aanmeldingen', href: '/kandidaten/aanmeldingen', icon: ClipboardList },
-      { label: 'Overzicht', href: '/kandidaten/overzicht', icon: Users },
-      { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
+      { label: 'Intakegesprekken', href: '/kandidaten/intakegesprekken', icon: CalendarCheck },
     ],
   },
   {
-    title: 'TRAININGEN',
+    title: 'PROGRAMMA',
     items: [
       { label: 'Certificaten', href: '/trainingen/programmas', icon: Award },
       { label: 'Groepen', href: '/trainingen/groepen', icon: Layers },
+      { label: 'Voortgang', href: '/voortgang', icon: TrendingUp },
     ],
   },
   {
-    title: 'VOORTGANG & RAPPORTAGE',
+    title: null,
     items: [
-      { label: 'Voortgang & Resultaten', href: '/voortgang', icon: TrendingUp },
+      { label: 'Nazorg', href: '/kandidaten/nazorg', icon: HeartHandshake },
+      { label: 'Kandidaten', href: '/kandidaten/overzicht', icon: Users },
+    ],
+  },
+  {
+    title: 'RAPPORTAGE',
+    items: [
       { label: 'Rapportage Dashboard', href: '/rapportage/dashboard', icon: BarChart3 },
+      { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
       { label: 'Visueel Rapport', href: '/rapportage/rapport', icon: FileBarChart },
       { label: 'Eindrapportage', href: '/rapportage/eindrapport', icon: FileCheck },
       { label: 'AI Rapport', href: '/rapportage/ai-rapport', icon: Sparkles },

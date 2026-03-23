@@ -13,6 +13,8 @@ import NieuweAanmelding from '@/pages/kandidaten/NieuweAanmelding';
 import KandidaatDetail from '@/pages/kandidaten/KandidaatDetail';
 import KandidatenOverzicht from '@/pages/kandidaten/Overzicht';
 import IntakeUitvoeren from '@/pages/kandidaten/IntakeUitvoeren';
+import Intakegesprekken from '@/pages/kandidaten/Intakegesprekken';
+import Nazorg from '@/pages/kandidaten/Nazorg';
 import Trainingen from '@/pages/trainingen/Trainingen';
 import Groepen from '@/pages/trainingen/Groepen';
 import GroepDetail from '@/pages/trainingen/GroepDetail';
@@ -66,6 +68,8 @@ export default function App() {
               {/* Kandidaten */}
               <Route path="/kandidaten/aanmeldingen" element={<Aanmeldingen />} />
               <Route path="/kandidaten/aanmeldingen/nieuw" element={<NieuweAanmelding />} />
+              <Route path="/kandidaten/intakegesprekken" element={<Intakegesprekken />} />
+              <Route path="/kandidaten/nazorg" element={<Nazorg />} />
               <Route path="/kandidaten/overzicht" element={<KandidatenOverzicht />} />
               <Route path="/kandidaten/:id" element={<KandidaatDetail />} />
               <Route path="/kandidaten/:id/intake" element={<IntakeUitvoeren />} />
