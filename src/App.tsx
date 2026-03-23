@@ -32,7 +32,6 @@ import RapportageAI from '@/pages/rapportage/RapportageAI';
 import RapportageGebiedskaart from '@/pages/rapportage/RapportageGebiedskaart';
 import RapportageImportLog from '@/pages/rapportage/RapportageImportLog';
 import RapportageRubrieken from '@/pages/rapportage/RapportageRubrieken';
-import RapportageInstructies from '@/pages/rapportage/RapportageInstructies';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,7 +93,7 @@ export default function App() {
               <Route path="/rapportage/gebiedskaart" element={<RapportageGebiedskaart />} />
               <Route path="/rapportage/import-log" element={<RapportageImportLog />} />
               <Route path="/rapportage/rubrieken" element={<RapportageRubrieken />} />
-              <Route path="/rapportage/instructies" element={<RapportageInstructies />} />
+              <Route path="/rapportage/instructies" element={<Navigate to="/help" replace />} />
 
               {/* Help */}
               <Route path="/help" element={<HelpCenter />} />

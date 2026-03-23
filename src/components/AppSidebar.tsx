@@ -17,7 +17,6 @@ import {
   MapPin,
   Upload,
   Tag,
-  Info,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +57,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Aanmeldingen', href: '/kandidaten/aanmeldingen', icon: ClipboardList },
       { label: 'Overzicht', href: '/kandidaten/overzicht', icon: Users },
+      { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
     ],
   },
   {
@@ -68,23 +68,14 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'VOORTGANG',
+    title: 'VOORTGANG & RAPPORTAGE',
     items: [
       { label: 'Voortgang & Resultaten', href: '/voortgang', icon: TrendingUp },
-    ],
-  },
-  {
-    title: 'RAPPORTAGE',
-    items: [
-      { label: 'Dashboard', href: '/rapportage/dashboard', icon: BarChart3 },
-      { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
-      { label: 'Rapportage', href: '/rapportage/rapport', icon: FileBarChart },
+      { label: 'Rapportage Dashboard', href: '/rapportage/dashboard', icon: BarChart3 },
+      { label: 'Visueel Rapport', href: '/rapportage/rapport', icon: FileBarChart },
       { label: 'Eindrapportage', href: '/rapportage/eindrapport', icon: FileCheck },
       { label: 'AI Rapport', href: '/rapportage/ai-rapport', icon: Sparkles },
       { label: 'Gebiedskaart', href: '/rapportage/gebiedskaart', icon: MapPin },
-      { label: 'Import Log', href: '/rapportage/import-log', icon: Upload },
-      { label: 'Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
-      { label: 'Instructies', href: '/rapportage/instructies', icon: Info },
     ],
   },
   {
@@ -100,6 +91,8 @@ const ADMIN_SECTION: NavSection = {
   items: [
     { label: 'Gebruikers', href: '/beheer/gebruikers', icon: UserCog },
     { label: 'Opties', href: '/beheer/opties', icon: List },
+    { label: 'Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
+    { label: 'Import Log', href: '/rapportage/import-log', icon: Upload },
     { label: 'Audit Log', href: '/beheer/audit', icon: FileText },
   ],
 };
