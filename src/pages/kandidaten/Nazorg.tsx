@@ -22,7 +22,7 @@ export default function Nazorg() {
       <div className="flex items-center gap-3">
         <HeartHandshake className="h-7 w-7 text-primary" />
         <div>
-          <h1 className="text-2xl font-bold">Nazorg</h1>
+          <h1 className="text-2xl font-bold">Uitstroom</h1>
           <p className="text-sm text-muted-foreground">
             Kandidaten die trainingen en certificaten hebben afgerond en worden gevolgd
           </p>

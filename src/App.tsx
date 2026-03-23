@@ -69,7 +69,7 @@ export default function App() {
               <Route path="/kandidaten/aanmeldingen" element={<Aanmeldingen />} />
               <Route path="/kandidaten/aanmeldingen/nieuw" element={<NieuweAanmelding />} />
               <Route path="/kandidaten/intakegesprekken" element={<Intakegesprekken />} />
-              <Route path="/kandidaten/nazorg" element={<Nazorg />} />
+              <Route path="/kandidaten/uitstroom" element={<Nazorg />} />
               <Route path="/kandidaten/overzicht" element={<KandidatenOverzicht />} />
               <Route path="/kandidaten/:id" element={<KandidaatDetail />} />
               <Route path="/kandidaten/:id/intake" element={<IntakeUitvoeren />} />

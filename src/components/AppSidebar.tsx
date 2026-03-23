@@ -73,7 +73,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: null,
     items: [
-      { label: 'Nazorg', href: '/kandidaten/nazorg', icon: HeartHandshake },
+      { label: 'Uitstroom', href: '/kandidaten/uitstroom', icon: HeartHandshake },
       { label: 'Kandidaten', href: '/kandidaten/overzicht', icon: Users },
     ],
   },
