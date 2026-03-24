@@ -14,21 +14,21 @@ DROP POLICY IF EXISTS "Authenticated users can delete uitstroom updates" ON cs_u
 CREATE POLICY "Role-based read uitstroom updates"
 ON cs_uitstroom_updates FOR SELECT TO authenticated
 USING (
-  cs_has_any_role(auth.uid(), ARRAY['admin','manager','intaker','trainer'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','manager','intaker','trainer']::cs_role[])
 );
 
 -- Insert: admin, intaker
 CREATE POLICY "Role-based insert uitstroom updates"
 ON cs_uitstroom_updates FOR INSERT TO authenticated
 WITH CHECK (
-  cs_has_any_role(auth.uid(), ARRAY['admin','intaker'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','intaker']::cs_role[])
 );
 
 -- Delete: admin only
 CREATE POLICY "Admin can delete uitstroom updates"
 ON cs_uitstroom_updates FOR DELETE TO authenticated
 USING (
-  cs_has_role(auth.uid(), 'admin')
+  cs_has_role(auth.uid(), 'admin'::cs_role)
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -47,10 +47,10 @@ USING (true);
 CREATE POLICY "Admin/manager manage uitstroom rubrieken"
 ON cs_uitstroom_rubrieken FOR ALL TO authenticated
 USING (
-  cs_has_any_role(auth.uid(), ARRAY['admin','manager'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','manager']::cs_role[])
 )
 WITH CHECK (
-  cs_has_any_role(auth.uid(), ARRAY['admin','manager'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','manager']::cs_role[])
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -64,14 +64,14 @@ DROP POLICY IF EXISTS "Authenticated users can insert import log" ON cs_import_l
 CREATE POLICY "Admin/manager read import log"
 ON cs_import_log FOR SELECT TO authenticated
 USING (
-  cs_has_any_role(auth.uid(), ARRAY['admin','manager'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','manager']::cs_role[])
 );
 
 -- Insert: admin, manager (only they should import)
 CREATE POLICY "Admin/manager insert import log"
 ON cs_import_log FOR INSERT TO authenticated
 WITH CHECK (
-  cs_has_any_role(auth.uid(), ARRAY['admin','manager'])
+  cs_has_any_role(auth.uid(), ARRAY['admin','manager']::cs_role[])
 );
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -92,7 +92,7 @@ CREATE POLICY "Admin/intaker upload kandidaat files"
 ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (
   bucket_id = 'kandidaat-bestanden'
-  AND cs_has_any_role(auth.uid(), ARRAY['admin','intaker'])
+  AND cs_has_any_role(auth.uid(), ARRAY['admin','intaker']::cs_role[])
 );
 
 -- Delete: admin only
@@ -100,5 +100,5 @@ CREATE POLICY "Admin delete kandidaat files"
 ON storage.objects FOR DELETE TO authenticated
 USING (
   bucket_id = 'kandidaat-bestanden'
-  AND cs_has_role(auth.uid(), 'admin')
+  AND cs_has_role(auth.uid(), 'admin'::cs_role)
 );

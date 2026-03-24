@@ -353,13 +353,27 @@ function splitMultipleCandidates(text: string): string[] {
 
 export async function parseWord(buffer: ArrayBuffer): Promise<ParseResult> {
   const mammoth = await import('mammoth');
-  const result = await mammoth.default.extractRawText({ arrayBuffer: buffer });
-  const text = result.value;
   const warnings: string[] = [];
 
-  if (result.messages.length > 0) {
-    warnings.push(...result.messages.map((m: any) => m.message));
+  // First try HTML conversion to detect tables
+  const htmlResult = await mammoth.default.convertToHtml({ arrayBuffer: buffer });
+  if (htmlResult.messages.length > 0) {
+    warnings.push(...htmlResult.messages.map((m: any) => m.message));
   }
+
+  // Check if document contains tables
+  const hasTable = /<table[\s>]/i.test(htmlResult.value);
+
+  if (hasTable) {
+    const tableKandidaten = parseWordTable(htmlResult.value, warnings);
+    if (tableKandidaten.length > 0) {
+      return { kandidaten: tableKandidaten, warnings, source: 'word' };
+    }
+  }
+
+  // Fallback: plain text extraction for label: value format
+  const textResult = await mammoth.default.extractRawText({ arrayBuffer: buffer });
+  const text = textResult.value;
 
   const sections = splitMultipleCandidates(text);
   const kandidaten = sections
@@ -367,10 +381,184 @@ export async function parseWord(buffer: ArrayBuffer): Promise<ParseResult> {
     .filter((k) => k.voornaam || k.achternaam);
 
   if (kandidaten.length === 0) {
-    warnings.push('Geen kandidaatgegevens herkend in het document. Controleer of de velden gelabeld zijn (bijv. "Voornaam: Jan").');
+    warnings.push('Geen kandidaatgegevens herkend in het document. Controleer of de velden gelabeld zijn (bijv. "Voornaam: Jan") of gebruik een tabel met kolommen.');
   }
 
   return { kandidaten, warnings, source: 'word' };
+}
+
+// ---------------------------------------------------------------------------
+// Word TABLE parser — handles documents with tabular candidate data
+// ---------------------------------------------------------------------------
+
+/** Extract text from HTML, stripping tags */
+function htmlToText(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, '')
+    .trim();
+}
+
+/** Parse all <tr> rows from HTML table(s) */
+function extractTableRows(html: string): string[][] {
+  const rows: string[][] = [];
+  const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let trMatch;
+  while ((trMatch = trRegex.exec(html)) !== null) {
+    const cells: string[] = [];
+    const tdRegex = /<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi;
+    let tdMatch;
+    while ((tdMatch = tdRegex.exec(trMatch[1])) !== null) {
+      cells.push(htmlToText(tdMatch[1]));
+    }
+    if (cells.length > 0) rows.push(cells);
+  }
+  return rows;
+}
+
+/** Known header patterns for the aanmeldingen table format */
+const TABLE_HEADER_PATTERNS: Record<string, (cell: string) => boolean> = {
+  deelnemersgegevens: (c) => /deelnemer/i.test(c),
+  aanmelder: (c) => /aanmelder/i.test(c),
+  datum: (c) => /datum/i.test(c),
+  code_org: (c) => /code\s*org/i.test(c),
+  stavaza: (c) => /sta(va)?za|status|voortgang/i.test(c),
+};
+
+/** Parse a cell that contains "Label\nValue" pairs */
+function parseLabelValueCell(cellText: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  const lines = cellText.split('\n').map((l) => l.trim()).filter(Boolean);
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Check for "Label: Value" on same line
+    const colonMatch = line.match(/^(naam|telefoonnummer|e-?mailadres|telefoon|e-?mail|adres|woonplaats|leeftijd|geslacht)\s*[:：]\s*(.+)/i);
+    if (colonMatch) {
+      result[colonMatch[1].toLowerCase()] = colonMatch[2].trim();
+      continue;
+    }
+    // Check for "Label" on one line, "Value" on next line
+    if (/^(naam|telefoonnummer|e-?mailadres|telefoon|e-?mail|adres|woonplaats|leeftijd|geslacht)$/i.test(line) && i + 1 < lines.length) {
+      result[line.toLowerCase()] = lines[i + 1].trim();
+      i++; // skip value line
+      continue;
+    }
+    // If first line has no label, assume it's a name
+    if (i === 0 && !result['naam'] && line.length > 1 && line.length < 60 && !/^(naam|tel|e-?mail|adres)/i.test(line)) {
+      result['naam'] = line;
+    }
+  }
+  return result;
+}
+
+function parseWordTable(html: string, warnings: string[]): ParsedKandidaat[] {
+  const rows = extractTableRows(html);
+  if (rows.length < 2) return [];
+
+  // Detect header row
+  const headerRow = rows[0];
+  const colMap: Record<string, number> = {};
+
+  for (let i = 0; i < headerRow.length; i++) {
+    for (const [key, matcher] of Object.entries(TABLE_HEADER_PATTERNS)) {
+      if (matcher(headerRow[i])) {
+        colMap[key] = i;
+        break;
+      }
+    }
+  }
+
+  // If we didn't find at least deelnemersgegevens, try row-based label:value
+  if (!('deelnemersgegevens' in colMap) && !('aanmelder' in colMap)) {
+    return [];
+  }
+
+  const kandidaten: ParsedKandidaat[] = [];
+
+  for (let r = 1; r < rows.length; r++) {
+    const row = rows[r];
+    const k: ParsedKandidaat = {};
+
+    // Parse deelnemersgegevens cell
+    if (colMap.deelnemersgegevens !== undefined) {
+      const cell = row[colMap.deelnemersgegevens] ?? '';
+      const parsed = parseLabelValueCell(cell);
+      if (parsed['naam']) {
+        const parts = parsed['naam'].split(/\s+/);
+        k.voornaam = parts[0] ?? null;
+        k.achternaam = parts.slice(1).join(' ') || null;
+      }
+      if (parsed['telefoonnummer'] || parsed['telefoon']) {
+        k.telefoon = parsed['telefoonnummer'] || parsed['telefoon'];
+      }
+      if (parsed['e-mailadres'] || parsed['email'] || parsed['e-mail']) {
+        k.email = parsed['e-mailadres'] || parsed['email'] || parsed['e-mail'];
+      }
+    }
+
+    // Parse aanmelder cell
+    if (colMap.aanmelder !== undefined) {
+      const cell = row[colMap.aanmelder] ?? '';
+      const cellUpper = cell.toUpperCase().trim();
+      if (cellUpper === 'ZELFMELDER' || cellUpper === 'ZELF') {
+        k.aanmeld_type = 'zelf';
+        k.door_wie_bekend = 'Zelfmelder';
+      } else if (cell.trim()) {
+        k.aanmeld_type = 'ander';
+        const parsed = parseLabelValueCell(cell);
+        if (parsed['naam']) {
+          k.aanmelder_naam = parsed['naam'];
+        }
+        if (parsed['telefoonnummer'] || parsed['telefoon']) {
+          k.aanmelder_telefoon = parsed['telefoonnummer'] || parsed['telefoon'];
+        }
+        if (parsed['e-mailadres'] || parsed['email'] || parsed['e-mail']) {
+          k.aanmelder_email = parsed['e-mailadres'] || parsed['email'] || parsed['e-mail'];
+        }
+      }
+    }
+
+    // Parse datum
+    if (colMap.datum !== undefined && row[colMap.datum]) {
+      const raw = row[colMap.datum].trim();
+      // Try to parse DD/MM or DD/MM/YY format
+      const dateMatch = raw.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+      if (dateMatch) {
+        const day = dateMatch[1].padStart(2, '0');
+        const month = dateMatch[2].padStart(2, '0');
+        let year = dateMatch[3] ?? new Date().getFullYear().toString();
+        if (year.length === 2) year = '20' + year;
+        k.aanmeld_datum = `${year}-${month}-${day}`;
+      }
+    }
+
+    // Parse code org
+    if (colMap.code_org !== undefined && row[colMap.code_org]) {
+      k.aanmeld_organisatie = row[colMap.code_org].trim();
+    }
+
+    // Parse stavaza (status/notes)
+    if (colMap.stavaza !== undefined && row[colMap.stavaza]) {
+      k.intake_notities = row[colMap.stavaza].trim();
+    }
+
+    // Only add if we have at least a name
+    if (k.voornaam || k.achternaam) {
+      k.traject_status = 'aanmelding';
+      kandidaten.push(k);
+    } else {
+      warnings.push(`Tabelrij ${r + 1}: geen naam gevonden, overgeslagen`);
+    }
+  }
+
+  return kandidaten;
 }
 
 // ---------------------------------------------------------------------------
