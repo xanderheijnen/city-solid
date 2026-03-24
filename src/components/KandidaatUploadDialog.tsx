@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { parseFile, getFileType, KANDIDAAT_FIELD_LABELS } from '@/lib/fileParser';
 import type { ParsedKandidaat, ParseResult } from '@/lib/fileParser';
 import { useCreateKandidaat } from '@/hooks/useKandidaten';
+import { supabase } from '@/integrations/supabase/client';
 
 // ---------------------------------------------------------------------------
 // Whitelist of cs_kandidaten columns that can be set via import
@@ -210,6 +211,22 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
         errors.push(`${name}: ${msg}`);
       }
       setSaveProgress({ done: i + 1, total: kandidaten.length });
+    }
+
+    // Log import to cs_import_log
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('cs_import_log').insert({
+        bestandsnaam: file?.name ?? 'onbekend',
+        bron: result?.source ?? 'onbekend',
+        aantal_rijen: kandidaten.length,
+        aantal_succesvol: kandidaten.length - errors.length,
+        aantal_mislukt: errors.length,
+        fouten: errors.length > 0 ? errors : [],
+        geimporteerd_door: user?.id ?? null,
+      });
+    } catch {
+      // Non-critical: don't block UI if logging fails
     }
 
     setSaveErrors(errors);
