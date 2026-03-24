@@ -65,9 +65,9 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Aanmeldingen', href: '/kandidaten/aanmeldingen', icon: ClipboardList },
       { label: 'Intakegesprekken', href: '/kandidaten/intakegesprekken', icon: CalendarCheck },
       { label: 'Certificaten', href: '/trainingen/programmas', icon: Award },
-      { label: 'Groepen', href: '/trainingen/groepen', icon: Layers },
       { label: 'Voortgang', href: '/voortgang', icon: TrendingUp },
       { label: 'Uitstroom', href: '/kandidaten/uitstroom', icon: HeartHandshake },
+      { label: 'Groepen', href: '/trainingen/groepen', icon: Layers },
     ],
   },
   // ── Rapportage: inzichten en overzichten ──
