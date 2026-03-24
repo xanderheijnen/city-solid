@@ -21,6 +21,45 @@ import type { ParsedKandidaat, ParseResult } from '@/lib/fileParser';
 import { useCreateKandidaat } from '@/hooks/useKandidaten';
 
 // ---------------------------------------------------------------------------
+// Whitelist of cs_kandidaten columns that can be set via import
+// ---------------------------------------------------------------------------
+
+const ALLOWED_INSERT_FIELDS = new Set([
+  'voornaam', 'achternaam', 'geslacht', 'geboortedatum', 'geboorteplaats',
+  'bsn', 'nationaliteit', 'straat', 'postcode', 'woonplaats',
+  'ingeschreven_adres_brp', 'reden_geen_brp', 'wijk', 'gebied',
+  'telefoon', 'email', 'contactpersoon', 'whatsapp',
+  'eigen_vervoer', 'rijbewijs', 'zorgverzekering', 'uitkering',
+  'toestemming', 'klantmanager', 'door_wie_bekend',
+  'aanmeld_type', 'aanmelder_naam', 'aanmelder_telefoon', 'aanmelder_email',
+  'aanmeld_organisatie', 'gewenst_project', 'gewenste_sector',
+  'certificaat_voorkeur_1', 'certificaat_voorkeur_2',
+  'motivatie', 'demotivatie', 'stip_aan_de_horizon',
+  'goede_eigenschappen', 'minder_goed_in', 'talen', 'hobbys',
+  'medische_bijzonderheden', 'woonsituatie', 'kinderen',
+  'trajecten', 'hulpverleners_betrokken', 'afspraken_hulp',
+  'middelengebruik', 'heeft_schulden', 'schulden_reden_bedrag', 'schulden_afspraken',
+  'aanraking_politie_justitie', 'aanraking_reden', 'veroordeeld_detentie', 'lopende_zaken',
+  'opleiding', 'diploma_behaald', 'opleiding_niveau', 'reden_uitval',
+  'cursussen_gevolgd', 'certificaten_behaald', 'werkervaring', 'waarom_lukte_niet', 'heeft_cv',
+  'acties_afspraken', 'leefgebieden_aandacht',
+  'aanmeld_datum', 'intake_datum', 'intake_door', 'intake_notities',
+  'leeftijd', 'traject_status',
+  'foto_url', 'id_scan_url', 'cv_url', 'uitstroom_status',
+  'activiteit', 'csn', 'no_show', 'eenoudergezin', 'verandering',
+]);
+
+function filterToDbFields(k: ParsedKandidaat): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, val] of Object.entries(k)) {
+    if (ALLOWED_INSERT_FIELDS.has(key) && val != null && val !== '') {
+      result[key] = val;
+    }
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -157,14 +196,18 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
     for (let i = 0; i < kandidaten.length; i++) {
       const k = kandidaten[i];
       try {
+        const dbFields = filterToDbFields(k);
         await createKandidaat.mutateAsync({
           voornaam: String(k.voornaam ?? ''),
           achternaam: String(k.achternaam ?? ''),
-          ...k,
+          ...dbFields,
         });
       } catch (err) {
         const name = `${k.voornaam ?? ''} ${k.achternaam ?? ''}`.trim() || `Rij ${i + 1}`;
-        errors.push(`${name}: ${err instanceof Error ? err.message : String(err)}`);
+        const msg = err instanceof Error ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: string }).message)
+          : JSON.stringify(err);
+        errors.push(`${name}: ${msg}`);
       }
       setSaveProgress({ done: i + 1, total: kandidaten.length });
     }
