@@ -9,30 +9,7 @@ import type { ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-
-// ---------------------------------------------------------------------------
-// Dev bypass – set VITE_DEV_BYPASS_AUTH=true in .env to skip Supabase auth
-// ---------------------------------------------------------------------------
-
-const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS_AUTH === 'true';
-
-const MOCK_USER = {
-  id: 'dev-user-0000',
-  email: 'admin@citysolid.dev',
-  aud: 'authenticated',
-  role: 'authenticated',
-  app_metadata: {},
-  user_metadata: { full_name: 'Dev Admin' },
-  created_at: new Date().toISOString(),
-} as unknown as User;
-
-const MOCK_SESSION = {
-  access_token: 'dev-token',
-  refresh_token: 'dev-refresh',
-  expires_in: 99999,
-  token_type: 'bearer',
-  user: MOCK_USER,
-} as unknown as Session;
+import type { CsRole } from '@/lib/types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -63,14 +40,10 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [session, setSession] = useState<Session | null>(
-    DEV_BYPASS ? MOCK_SESSION : null,
-  );
-  const [loading, setLoading] = useState(!DEV_BYPASS);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (DEV_BYPASS) return;
-
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
       setLoading(false);
@@ -91,22 +64,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // -- Actions ---------------------------------------------------------------
 
   const login = useCallback(async (email: string, password: string) => {
-    if (DEV_BYPASS) return;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
   }, []);
 
   const logout = useCallback(async () => {
-    if (DEV_BYPASS) {
-      setSession(null);
-      return;
-    }
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
-    if (DEV_BYPASS) return;
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -114,7 +81,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const updatePassword = useCallback(async (newPassword: string) => {
-    if (DEV_BYPASS) return;
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     if (error) throw error;
   }, []);
@@ -175,6 +141,57 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!session) {
     return null;
   }
+
+  return <>{children}</>;
+}
+
+// ---------------------------------------------------------------------------
+// AdminRoute -- wraps routes that require admin or manager role
+// ---------------------------------------------------------------------------
+
+interface AdminRouteProps {
+  children: ReactNode;
+  roles?: CsRole[];
+}
+
+export function AdminRoute({ children, roles = ['admin', 'manager'] }: AdminRouteProps) {
+  const { session, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [authorized, setAuthorized] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!session) {
+      navigate('/login', { replace: true });
+      return;
+    }
+
+    supabase
+      .from('cs_user_roles')
+      .select('role')
+      .eq('user_id', session.user.id)
+      .then(({ data }) => {
+        const userRoles = (data ?? []).map((r) => r.role as CsRole);
+        const hasAccess = roles.some((role) => userRoles.includes(role));
+        if (!hasAccess) {
+          navigate('/dashboard', { replace: true });
+        } else {
+          setAuthorized(true);
+        }
+        setChecking(false);
+      });
+  }, [authLoading, session, navigate, roles]);
+
+  if (authLoading || checking) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!authorized) return null;
 
   return <>{children}</>;
 }

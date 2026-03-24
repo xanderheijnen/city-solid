@@ -2,6 +2,12 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const BUCKET = 'kandidaat-bestanden';
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_EXTENSIONS = new Set([
+  'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp',  // images
+  'pdf', 'doc', 'docx', 'odt',                   // documents
+  'xls', 'xlsx', 'csv',                           // spreadsheets
+]);
 
 interface UploadResult {
   path: string;
@@ -16,9 +22,20 @@ export function useFileUpload() {
     kandidaatId: string,
     folder: 'foto' | 'id-scan' | 'cv',
   ): Promise<UploadResult> => {
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      throw new Error(`Bestand is te groot (max ${MAX_FILE_SIZE / 1024 / 1024} MB)`);
+    }
+
+    // Validate & sanitize file extension
+    const rawExt = (file.name.split('.').pop() ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!rawExt || !ALLOWED_EXTENSIONS.has(rawExt)) {
+      throw new Error(`Bestandstype .${rawExt || '?'} is niet toegestaan`);
+    }
+
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() ?? 'bin';
+      const ext = rawExt;
       const timestamp = Date.now();
       const path = `${kandidaatId}/${folder}/${timestamp}.${ext}`;
 
@@ -36,7 +53,7 @@ export function useFileUpload() {
       // For private buckets, use signed URL instead
       const { data: signedData, error: signedError } = await supabase.storage
         .from(BUCKET)
-        .createSignedUrl(path, 60 * 60 * 24 * 365); // 1 year signed URL
+        .createSignedUrl(path, 60 * 60); // 1 hour signed URL
 
       const url = signedData?.signedUrl ?? data.publicUrl;
 

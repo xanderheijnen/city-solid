@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
-import { AuthProvider, ProtectedRoute } from '@/hooks/useAuth';
+import { AuthProvider, ProtectedRoute, AdminRoute } from '@/hooks/useAuth';
 import { AppLayout } from '@/layouts/AppLayout';
 
 // Pages
@@ -82,11 +82,11 @@ export default function App() {
               {/* Voortgang */}
               <Route path="/voortgang" element={<VoortgangOverzicht />} />
 
-              {/* Beheer */}
-              <Route path="/beheer" element={<Beheer />} />
-              <Route path="/beheer/gebruikers" element={<Gebruikers />} />
-              <Route path="/beheer/opties" element={<Opties />} />
-              <Route path="/beheer/audit" element={<AuditLog />} />
+              {/* Beheer — admin/manager only */}
+              <Route path="/beheer" element={<AdminRoute><Beheer /></AdminRoute>} />
+              <Route path="/beheer/gebruikers" element={<AdminRoute roles={['admin']}><Gebruikers /></AdminRoute>} />
+              <Route path="/beheer/opties" element={<AdminRoute><Opties /></AdminRoute>} />
+              <Route path="/beheer/audit" element={<AdminRoute><AuditLog /></AdminRoute>} />
 
               {/* Rapportage */}
               <Route path="/rapportage/dashboard" element={<RapportageDashboard />} />

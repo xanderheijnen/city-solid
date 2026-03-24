@@ -3,8 +3,6 @@ import type { CsRole } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-const DEV_BYPASS = import.meta.env.VITE_DEV_BYPASS_AUTH === 'true';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -27,14 +25,10 @@ interface UseRoleReturn {
 
 export function useRole(): UseRoleReturn {
   const { user } = useAuth();
-  const [currentRoles, setCurrentRoles] = useState<CsRole[]>(
-    DEV_BYPASS ? ['admin'] : [],
-  );
-  const [loading, setLoading] = useState(!DEV_BYPASS);
+  const [currentRoles, setCurrentRoles] = useState<CsRole[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (DEV_BYPASS) return;
-
     if (!user) {
       setCurrentRoles([]);
       setLoading(false);
