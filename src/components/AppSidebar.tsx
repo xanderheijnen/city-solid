@@ -50,38 +50,31 @@ interface NavSection {
 }
 
 const NAV_SECTIONS: NavSection[] = [
+  // ── Overzicht ──
   {
     title: null,
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Alle Kandidaten', href: '/kandidaten/overzicht', icon: Users },
     ],
   },
+  // ── Traject: de stappen die een kandidaat doorloopt ──
   {
-    title: null,
+    title: 'TRAJECT',
     items: [
       { label: 'Aanmeldingen', href: '/kandidaten/aanmeldingen', icon: ClipboardList },
       { label: 'Intakegesprekken', href: '/kandidaten/intakegesprekken', icon: CalendarCheck },
-    ],
-  },
-  {
-    title: 'PROGRAMMA',
-    items: [
       { label: 'Certificaten', href: '/trainingen/programmas', icon: Award },
       { label: 'Groepen', href: '/trainingen/groepen', icon: Layers },
       { label: 'Voortgang', href: '/voortgang', icon: TrendingUp },
-    ],
-  },
-  {
-    title: null,
-    items: [
       { label: 'Uitstroom', href: '/kandidaten/uitstroom', icon: HeartHandshake },
-      { label: 'Kandidaten', href: '/kandidaten/overzicht', icon: Users },
     ],
   },
+  // ── Rapportage: inzichten en overzichten ──
   {
     title: 'RAPPORTAGE',
     items: [
-      { label: 'Rapportage Dashboard', href: '/rapportage/dashboard', icon: BarChart3 },
+      { label: 'Overzicht', href: '/rapportage/dashboard', icon: BarChart3 },
       { label: 'Deelnemers', href: '/rapportage/deelnemers', icon: Users },
       { label: 'Visueel Rapport', href: '/rapportage/rapport', icon: FileBarChart },
       { label: 'Eindrapportage', href: '/rapportage/eindrapport', icon: FileCheck },
@@ -89,8 +82,9 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Gebiedskaart', href: '/rapportage/gebiedskaart', icon: MapPin },
     ],
   },
+  // ── Hulp ──
   {
-    title: 'HULP',
+    title: null,
     items: [
       { label: 'Help Center', href: '/help', icon: HelpCircle },
     ],
@@ -98,12 +92,12 @@ const NAV_SECTIONS: NavSection[] = [
 ];
 
 const ADMIN_SECTION: NavSection = {
-  title: 'BEHEER',
+  title: 'INSTELLINGEN',
   items: [
     { label: 'Gebruikers', href: '/beheer/gebruikers', icon: UserCog },
     { label: 'Vragenlijst Kandidaten', href: '/beheer/vragenlijst', icon: ClipboardEdit },
     { label: 'Opties', href: '/beheer/opties', icon: List },
-    { label: 'Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
+    { label: 'Uitstroom Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
     { label: 'Import Log', href: '/rapportage/import-log', icon: Upload },
     { label: 'Audit Log', href: '/beheer/audit', icon: FileText },
   ],
