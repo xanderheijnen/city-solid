@@ -584,7 +584,7 @@ export default function VragenlijstBeheer() {
       <div>
         <div className="flex items-center gap-3">
           <ClipboardEdit className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold tracking-tight">Vragenlijst Beheer</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Vragenlijst Kandidaten</h1>
         </div>
         <p className="text-muted-foreground mt-1">
           Beheer de intake- en aanmeldingsvragenlijst. Pas labels aan, stel verplichte velden in en
