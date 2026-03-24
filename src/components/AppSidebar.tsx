@@ -20,6 +20,7 @@ import {
   CalendarCheck,
   GraduationCap,
   HeartHandshake,
+  ClipboardEdit,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -100,6 +101,7 @@ const ADMIN_SECTION: NavSection = {
   title: 'BEHEER',
   items: [
     { label: 'Gebruikers', href: '/beheer/gebruikers', icon: UserCog },
+    { label: 'Vragenlijst', href: '/beheer/vragenlijst', icon: ClipboardEdit },
     { label: 'Opties', href: '/beheer/opties', icon: List },
     { label: 'Rubrieken', href: '/rapportage/rubrieken', icon: Tag },
     { label: 'Import Log', href: '/rapportage/import-log', icon: Upload },

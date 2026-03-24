@@ -23,6 +23,7 @@ import Beheer from '@/pages/beheer/Beheer';
 import Gebruikers from '@/pages/beheer/Gebruikers';
 import Opties from '@/pages/beheer/Opties';
 import AuditLog from '@/pages/beheer/AuditLog';
+import VragenlijstBeheer from '@/pages/beheer/VragenlijstBeheer';
 import HelpCenter from '@/pages/help/HelpCenter';
 
 // Rapportage pages
@@ -85,6 +86,7 @@ export default function App() {
               {/* Beheer — admin/manager only */}
               <Route path="/beheer" element={<AdminRoute><Beheer /></AdminRoute>} />
               <Route path="/beheer/gebruikers" element={<AdminRoute roles={['admin']}><Gebruikers /></AdminRoute>} />
+              <Route path="/beheer/vragenlijst" element={<AdminRoute><VragenlijstBeheer /></AdminRoute>} />
               <Route path="/beheer/opties" element={<AdminRoute><Opties /></AdminRoute>} />
               <Route path="/beheer/audit" element={<AdminRoute><AuditLog /></AdminRoute>} />
 
