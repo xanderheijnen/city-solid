@@ -401,7 +401,7 @@ export default function KandidaatDetail() {
   };
 
   // ── File uploads ──
-  const { upload: uploadFile, uploading: fileUploading } = useFileUpload();
+  const { upload: uploadFile, uploading: fileUploading, getSignedUrl } = useFileUpload();
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const idScanInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
