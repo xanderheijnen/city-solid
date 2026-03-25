@@ -239,23 +239,82 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
     setKandidaten((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // ── Save all ──
+  // ── Save all (upsert: update existing, insert new) ──
   const handleSaveAll = async () => {
     setStep('saving');
     setSaveProgress({ done: 0, total: kandidaten.length });
     const errors: string[] = [];
+    let created = 0;
+    let updated = 0;
 
     for (let i = 0; i < kandidaten.length; i++) {
       const k = kandidaten[i];
+      const name = `${k.voornaam ?? ''} ${k.achternaam ?? ''}`.trim() || `Rij ${i + 1}`;
       try {
         const dbFields = filterToDbFields(k);
-        await createKandidaat.mutateAsync({
-          voornaam: String(k.voornaam ?? ''),
-          achternaam: String(k.achternaam ?? ''),
-          ...dbFields,
-        });
+        const csn = dbFields.csn as string | undefined;
+        const voornaam = String(k.voornaam ?? '').trim();
+        const achternaam = String(k.achternaam ?? '').trim();
+
+        // Check if kandidaat already exists (by CSN or voornaam+achternaam)
+        let existingId: string | null = null;
+
+        if (csn) {
+          const { data: byCSN } = await supabase
+            .from('cs_kandidaten')
+            .select('id')
+            .eq('csn', csn)
+            .maybeSingle();
+          if (byCSN) existingId = byCSN.id;
+        }
+
+        if (!existingId && voornaam && achternaam) {
+          const { data: byName } = await supabase
+            .from('cs_kandidaten')
+            .select('id')
+            .ilike('voornaam', voornaam)
+            .ilike('achternaam', achternaam)
+            .maybeSingle();
+          if (byName) existingId = byName.id;
+        }
+
+        if (existingId) {
+          // Update: only fill in fields that are currently empty/null
+          const { data: existing } = await supabase
+            .from('cs_kandidaten')
+            .select('*')
+            .eq('id', existingId)
+            .single();
+
+          if (existing) {
+            const updates: Record<string, unknown> = {};
+            for (const [key, val] of Object.entries(dbFields)) {
+              const currentVal = (existing as Record<string, unknown>)[key];
+              // Only update if current value is empty/null and new value has data
+              if ((currentVal == null || currentVal === '' || currentVal === false) && val != null && val !== '') {
+                updates[key] = val;
+              }
+            }
+
+            if (Object.keys(updates).length > 0) {
+              const { error: updateErr } = await supabase
+                .from('cs_kandidaten')
+                .update(updates)
+                .eq('id', existingId);
+              if (updateErr) throw updateErr;
+            }
+            updated++;
+          }
+        } else {
+          // Insert new kandidaat
+          await createKandidaat.mutateAsync({
+            voornaam,
+            achternaam,
+            ...dbFields,
+          });
+          created++;
+        }
       } catch (err) {
-        const name = `${k.voornaam ?? ''} ${k.achternaam ?? ''}`.trim() || `Rij ${i + 1}`;
         const msg = err instanceof Error ? err.message
           : typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: string }).message)
           : JSON.stringify(err);
@@ -294,10 +353,13 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
 
     setSaveErrors(errors);
     setStep('done');
+    const parts: string[] = [];
+    if (created > 0) parts.push(`${created} nieuw`);
+    if (updated > 0) parts.push(`${updated} aangevuld`);
     if (errors.length === 0) {
-      toast.success(`${kandidaten.length} kandidaten succesvol geïmporteerd!`);
+      toast.success(`${parts.join(', ')} — ${kandidaten.length} kandidaten verwerkt!`);
     } else {
-      toast.warning(`${kandidaten.length - errors.length} van ${kandidaten.length} geïmporteerd, ${errors.length} fouten.`);
+      toast.warning(`${parts.join(', ')}, ${errors.length} fouten van ${kandidaten.length}.`);
     }
   };
 
