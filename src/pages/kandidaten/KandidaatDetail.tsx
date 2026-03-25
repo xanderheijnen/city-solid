@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File, LogOut, MessageSquare, Check } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File, LogOut, MessageSquare, Check, ExternalLink, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -419,6 +419,20 @@ export default function KandidaatDetail() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : JSON.stringify(err);
       toast.error('Upload fout: ' + msg);
+    }
+  };
+
+  const openFile = async (path: string | null) => {
+    if (!path) return;
+    try {
+      const url = await getSignedUrl(path);
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        toast.error('Kan bestand niet openen');
+      }
+    } catch {
+      toast.error('Fout bij openen bestand');
     }
   };
 
@@ -935,11 +949,14 @@ export default function KandidaatDetail() {
                     </div>
                     {kandidaat.foto_url ? (
                       <div className="space-y-2">
-                        <div className="h-32 w-full rounded-lg bg-muted overflow-hidden">
+                        <div className="h-32 w-full rounded-lg bg-muted overflow-hidden cursor-pointer" onClick={() => openFile(kandidaat.foto_url)}>
                           <img src={kandidaat.foto_url} alt="Foto" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => fotoInputRef.current?.click()}>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => openFile(kandidaat.foto_url)}>
+                            <Eye className="mr-1 h-3 w-3" />Bekijken
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => fotoInputRef.current?.click()}>
                             Vervangen
                           </Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('foto_url')}>
@@ -968,14 +985,17 @@ export default function KandidaatDetail() {
                     </div>
                     {kandidaat.id_scan_url ? (
                       <div className="space-y-2">
-                        <div className="flex h-32 items-center justify-center rounded-lg bg-green-50 border border-green-200">
+                        <div className="flex h-32 items-center justify-center rounded-lg bg-green-50 border border-green-200 cursor-pointer hover:bg-green-100 transition-colors" onClick={() => openFile(kandidaat.id_scan_url)}>
                           <div className="text-center">
                             <CheckCircle2 className="mx-auto h-8 w-8 text-green-600 mb-1" />
                             <span className="text-xs text-green-700 font-medium">ID gescand</span>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => idScanInputRef.current?.click()}>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => openFile(kandidaat.id_scan_url)}>
+                            <Eye className="mr-1 h-3 w-3" />Bekijken
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => idScanInputRef.current?.click()}>
                             Vervangen
                           </Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('id_scan_url')}>
@@ -1004,14 +1024,17 @@ export default function KandidaatDetail() {
                     </div>
                     {kandidaat.cv_url ? (
                       <div className="space-y-2">
-                        <div className="flex h-32 items-center justify-center rounded-lg bg-blue-50 border border-blue-200">
+                        <div className="flex h-32 items-center justify-center rounded-lg bg-blue-50 border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors" onClick={() => openFile(kandidaat.cv_url)}>
                           <div className="text-center">
                             <CheckCircle2 className="mx-auto h-8 w-8 text-blue-600 mb-1" />
                             <span className="text-xs text-blue-700 font-medium">CV aanwezig</span>
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1" onClick={() => cvInputRef.current?.click()}>
+                          <Button size="sm" variant="outline" className="flex-1" onClick={() => openFile(kandidaat.cv_url)}>
+                            <Eye className="mr-1 h-3 w-3" />Bekijken
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => cvInputRef.current?.click()}>
                             Vervangen
                           </Button>
                           <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleRemoveFile('cv_url')}>
