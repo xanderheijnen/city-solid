@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, ArrowRight, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Save, Loader2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { cn } from '@/lib/utils';
 import { useKandidaat, useUpdateKandidaat } from '@/hooks/useKandidaten';
 import { useAuth } from '@/hooks/useAuth';
+import { IntakeOCRDialog } from '@/components/IntakeOCRDialog';
 
 // ---------------------------------------------------------------------------
 // Secties – exact volgend op het Intakedocument 2025
@@ -156,7 +157,23 @@ export default function IntakeUitvoeren() {
   const { data: kandidaat, isLoading } = useKandidaat(id);
   const updateKandidaat = useUpdateKandidaat();
   const [currentSection, setCurrentSection] = useState(0);
-  const { register, handleSubmit, setValue, watch, reset } = useForm<IntakeForm>();
+  const [ocrOpen, setOcrOpen] = useState(false);
+  const { register, handleSubmit, setValue, watch, reset, getValues } = useForm<IntakeForm>();
+
+  const handleOCRApply = (values: Record<string, string>) => {
+    for (const [key, value] of Object.entries(values)) {
+      if (key in ({} as IntakeForm)) {
+        // Handle booleans
+        if (['whatsapp', 'eigen_vervoer', 'rijbewijs', 'toestemming', 'heeft_schulden', 'aanraking_politie_justitie', 'heeft_cv'].includes(key)) {
+          const boolVal = ['ja', 'true', '1', 'yes'].includes(value.toLowerCase());
+          setValue(key as keyof IntakeForm, boolVal as any);
+        } else {
+          setValue(key as keyof IntakeForm, value as any);
+        }
+      }
+    }
+    toast.success(`${Object.keys(values).length} velden ingevuld vanuit OCR`);
+  };
 
   // Track selected sectors via watch
   const selectedSectors = watch('gewenste_sector') || [];
@@ -354,17 +371,30 @@ export default function IntakeUitvoeren() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to={`/kandidaten/${id}`}><ArrowLeft className="h-4 w-4" /></Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold">Intake Uitvoeren</h1>
-          <p className="text-muted-foreground">
-            {kandidaat.display_id} — {kandidaat.voornaam} {kandidaat.achternaam}
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to={`/kandidaten/${id}`}><ArrowLeft className="h-4 w-4" /></Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Intake Uitvoeren</h1>
+            <p className="text-muted-foreground">
+              {kandidaat.display_id} — {kandidaat.voornaam} {kandidaat.achternaam}
+            </p>
+          </div>
         </div>
+        <Button variant="outline" onClick={() => setOcrOpen(true)}>
+          <Camera className="mr-2 h-4 w-4" />
+          Formulier scannen
+        </Button>
       </div>
+
+      <IntakeOCRDialog
+        open={ocrOpen}
+        onOpenChange={setOcrOpen}
+        currentValues={getValues()}
+        onApply={handleOCRApply}
+      />
 
       {/* Section progress */}
       <div className="flex gap-1">
