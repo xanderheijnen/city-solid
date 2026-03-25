@@ -195,7 +195,7 @@ export function computeDashboardStats(
   }).length;
 
   // Stat cards
-  const opleidingen = chartDeelnemers.map((d) => d.opleiding_niveau).filter(Boolean);
+  const opleidingen = chartDeelnemers.map((d) => d.opleiding_niveau || d.opleiding).filter(Boolean);
   const opleidingCount = new Map<string, number>();
   for (const o of opleidingen) {
     opleidingCount.set(o!, (opleidingCount.get(o!) ?? 0) + 1);
@@ -203,32 +203,46 @@ export function computeDashboardStats(
   const meestVoorkomendeOpleiding = [...opleidingCount.entries()]
     .sort((a, b) => b[1] - a[1])[0]?.[0] ?? '-';
 
-  const geenBrp = chartDeelnemers.filter((d) => !d.ingeschreven_adres_brp || d.ingeschreven_adres_brp === 'nee').length;
-  const geenBrpPct = chartDeelnemers.length > 0 ? Math.round((geenBrp / chartDeelnemers.length) * 100) : 0;
+  // BRP: alleen "geen BRP" als het veld expliciet is ingevuld met "nee"
+  const brpIngevuld = chartDeelnemers.filter((d) => d.ingeschreven_adres_brp != null && d.ingeschreven_adres_brp !== '');
+  const geenBrp = brpIngevuld.filter((d) => d.ingeschreven_adres_brp!.toLowerCase() === 'nee').length;
+  const geenBrpPct = brpIngevuld.length > 0 ? Math.round((geenBrp / brpIngevuld.length) * 100) : 0;
 
   const justitie = chartDeelnemers.filter((d) => d.aanraking_politie_justitie).length;
   const justitiePct = chartDeelnemers.length > 0 ? Math.round((justitie / chartDeelnemers.length) * 100) : 0;
 
-  const heeftUitkering = chartDeelnemers.filter((d) => d.uitkering && d.uitkering.length > 0).length;
+  // Uitkering: filter "Nee" en lege waarden uit
+  const heeftUitkering = chartDeelnemers.filter((d) => {
+    if (!d.uitkering || d.uitkering.length === 0) return false;
+    const realUitkering = d.uitkering.filter((u) => u.toLowerCase() !== 'nee' && u.toLowerCase() !== 'geen' && u.trim() !== '');
+    return realUitkering.length > 0;
+  }).length;
   const uitkeringPct = chartDeelnemers.length > 0 ? Math.round((heeftUitkering / chartDeelnemers.length) * 100) : 0;
 
+  // Leeftijd: bereken uit geboortedatum, filter onrealistische waarden (< 5 of > 80)
   const leeftijden = chartDeelnemers
     .map((d) => {
-      if (d.leeftijd) return parseInt(d.leeftijd);
+      if (d.leeftijd) {
+        const parsed = parseInt(d.leeftijd);
+        if (parsed >= 5 && parsed <= 80) return parsed;
+      }
       if (d.geboortedatum) {
         const birth = new Date(d.geboortedatum);
         const now = new Date();
-        return Math.floor((now.getTime() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        const age = Math.floor((now.getTime() - birth.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        if (age >= 5 && age <= 80) return age;
       }
       return null;
     })
     .filter((l): l is number => l !== null);
   const gemLeeftijd = leeftijden.length > 0 ? Math.round(leeftijden.reduce((a, b) => a + b, 0) / leeftijden.length) : 0;
 
-  const mannen = chartDeelnemers.filter((d) => d.geslacht === 'man').length;
-  const vrouwen = chartDeelnemers.filter((d) => d.geslacht === 'vrouw').length;
-  const geslachtVerdeling = chartDeelnemers.length > 0
-    ? `${Math.round((mannen / chartDeelnemers.length) * 100)}% / ${Math.round((vrouwen / chartDeelnemers.length) * 100)}%`
+  // Geslacht: percentage van bekende geslachten (niet 'onbekend')
+  const bekendGeslacht = chartDeelnemers.filter((d) => d.geslacht && d.geslacht !== 'onbekend');
+  const mannen = bekendGeslacht.filter((d) => d.geslacht === 'man').length;
+  const vrouwen = bekendGeslacht.filter((d) => d.geslacht === 'vrouw').length;
+  const geslachtVerdeling = bekendGeslacht.length > 0
+    ? `${Math.round((mannen / bekendGeslacht.length) * 100)}% / ${Math.round((vrouwen / bekendGeslacht.length) * 100)}%`
     : '0% / 0%';
 
   // Chart data
