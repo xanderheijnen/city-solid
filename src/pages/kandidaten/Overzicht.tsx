@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   Search, Download, Loader2, Upload, ArrowUpAZ, ArrowDownZA,
   ArrowUp01, ArrowDown10, ChevronsUpDown, X, CheckCircle2, Circle,
-  LayoutGrid, TableProperties,
+  LayoutGrid, TableProperties, Settings2, GripVertical, Eye, EyeOff,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,10 @@ import {
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Popover, PopoverContent, PopoverTrigger,
+} from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { StatusBadge } from '@/components/StatusBadge';
 import { PermissionGate } from '@/components/PermissionGate';
@@ -230,11 +235,21 @@ function CompletionDot({ filled, label }: { filled: boolean; label: string }) {
   );
 }
 
-function BoardView({ kandidaten, sort, onSort }: {
+function BoardView({ kandidaten, sort, onSort, visibleFieldKeys }: {
   kandidaten: Kandidaat[];
   sort: { key: string; dir: SortDir } | null;
   onSort: (key: string, dir: SortDir) => void;
+  visibleFieldKeys: string[];
 }) {
+  const visibleFields = useMemo(
+    () => visibleFieldKeys.map((k) => COMPLETENESS_FIELDS.find((f) => f.key === k)!).filter(Boolean),
+    [visibleFieldKeys],
+  );
+  const visibleCategories = useMemo(
+    () => [...new Set(visibleFields.map((f) => f.category))],
+    [visibleFields],
+  );
+
   const sorted = useMemo(() => {
     if (sort?.key === 'completeness') {
       return [...kandidaten].sort((a, b) => {
@@ -269,8 +284,8 @@ function BoardView({ kandidaten, sort, onSort }: {
                 </button>
               </TableHead>
               <TableHead className="w-28 text-center">Volledigheid</TableHead>
-              {CATEGORIES.map((cat) => {
-                const fields = COMPLETENESS_FIELDS.filter((f) => f.category === cat);
+              {visibleCategories.map((cat) => {
+                const fields = visibleFields.filter((f) => f.category === cat);
                 return (
                   <TableHead
                     key={cat}
@@ -288,7 +303,7 @@ function BoardView({ kandidaten, sort, onSort }: {
               <TableHead className="sticky left-0 bg-muted/10 z-10" />
               <TableHead />
               <TableHead />
-              {COMPLETENESS_FIELDS.map((field) => (
+              {visibleFields.map((field) => (
                 <TableHead key={field.key} className="text-center px-1 border-l border-border/20">
                   <span className="text-[10px] text-muted-foreground leading-tight block">
                     {field.label}
@@ -329,7 +344,7 @@ function BoardView({ kandidaten, sort, onSort }: {
                       </span>
                     </div>
                   </TableCell>
-                  {COMPLETENESS_FIELDS.map((field) => (
+                  {visibleFields.map((field) => (
                     <TableCell key={field.key} className="text-center px-0 border-l border-border/10">
                       <CompletionDot filled={field.check(k)} label={field.label} />
                     </TableCell>
@@ -349,21 +364,26 @@ function BoardView({ kandidaten, sort, onSort }: {
 // TABLE VIEW (original)
 // ═══════════════════════════════════════════════════════════════════════════
 
-function TableView({ kandidaten, sort, onSort, clearSort }: {
+function TableView({ kandidaten, sort, onSort, clearSort, visibleKeys }: {
   kandidaten: Kandidaat[];
   sort: { key: string; dir: SortDir } | null;
   onSort: (key: string, dir: SortDir) => void;
   clearSort: () => void;
+  visibleKeys: string[];
 }) {
   const sorted = useMemo(() => sortKandidaten(kandidaten, sort), [kandidaten, sort]);
+  const visibleCols = useMemo(
+    () => visibleKeys.map((k) => TABLE_COLUMNS.find((c) => c.key === k)!).filter(Boolean),
+    [visibleKeys],
+  );
 
   return (
     <ScrollArea className="w-full">
-      <div className="min-w-[1400px]">
+      <div style={{ minWidth: `${Math.max(visibleCols.length * 120, 600)}px` }}>
         <Table>
           <TableHeader>
             <TableRow>
-              {TABLE_COLUMNS.map((col) => (
+              {visibleCols.map((col) => (
                 <SortableHeader
                   key={col.key}
                   column={col}
@@ -377,7 +397,7 @@ function TableView({ kandidaten, sort, onSort, clearSort }: {
           <TableBody>
             {sorted.map((k) => (
               <TableRow key={k.id}>
-                {TABLE_COLUMNS.map((col) => (
+                {visibleCols.map((col) => (
                   <TableCell key={col.key}>{col.render(k)}</TableCell>
                 ))}
               </TableRow>
@@ -387,6 +407,184 @@ function TableView({ kandidaten, sort, onSort, clearSort }: {
       </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// COLUMN CHOOSER — pick which columns are visible + reorder via drag
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULT_TABLE_VISIBLE = TABLE_COLUMNS.map((c) => c.key);
+const DEFAULT_BOARD_VISIBLE = COMPLETENESS_FIELDS.map((f) => f.key);
+
+function ColumnChooser({ allItems, visibleKeys, onChange, label }: {
+  allItems: { key: string; label: string; category?: string }[];
+  visibleKeys: string[];
+  onChange: (keys: string[]) => void;
+  label: string;
+}) {
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+
+  // Build ordered list: visible items in order, then hidden items
+  const orderedVisible = visibleKeys.map((k) => allItems.find((i) => i.key === k)!).filter(Boolean);
+  const hidden = allItems.filter((i) => !visibleKeys.includes(i.key));
+
+  const toggle = (key: string) => {
+    if (visibleKeys.includes(key)) {
+      onChange(visibleKeys.filter((k) => k !== key));
+    } else {
+      onChange([...visibleKeys, key]);
+    }
+  };
+
+  const moveUp = (key: string) => {
+    const idx = visibleKeys.indexOf(key);
+    if (idx <= 0) return;
+    const next = [...visibleKeys];
+    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+    onChange(next);
+  };
+
+  const moveDown = (key: string) => {
+    const idx = visibleKeys.indexOf(key);
+    if (idx < 0 || idx >= visibleKeys.length - 1) return;
+    const next = [...visibleKeys];
+    [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+    onChange(next);
+  };
+
+  const reset = () => {
+    onChange(allItems.map((i) => i.key));
+  };
+
+  const selectAll = () => onChange(allItems.map((i) => i.key));
+  const selectNone = () => onChange([]);
+
+  // Group hidden by category if available
+  const categories = [...new Set(allItems.map((i) => i.category).filter(Boolean))];
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="text-xs gap-1.5">
+          <Settings2 className="h-3.5 w-3.5" />
+          {label}
+          {visibleKeys.length < allItems.length && (
+            <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[10px] font-semibold ml-1">
+              {visibleKeys.length}/{allItems.length}
+            </span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-0" align="end">
+        <div className="p-3 border-b">
+          <div className="text-sm font-semibold mb-2">Kolommen kiezen</div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={selectAll}>
+              Alles aan
+            </Button>
+            <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={selectNone}>
+              Alles uit
+            </Button>
+            <Button variant="ghost" size="sm" className="text-xs h-7 px-2" onClick={reset}>
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          </div>
+        </div>
+        <ScrollArea className="max-h-[400px]">
+          {/* Visible items - reorderable */}
+          {orderedVisible.length > 0 && (
+            <div className="p-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-1">
+                Zichtbaar ({orderedVisible.length})
+              </div>
+              {orderedVisible.map((item, idx) => (
+                <div
+                  key={item.key}
+                  draggable
+                  onDragStart={() => setDragIdx(idx)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.classList.add('bg-primary/5');
+                  }}
+                  onDragLeave={(e) => e.currentTarget.classList.remove('bg-primary/5')}
+                  onDrop={(e) => {
+                    e.currentTarget.classList.remove('bg-primary/5');
+                    if (dragIdx === null || dragIdx === idx) return;
+                    const next = [...visibleKeys];
+                    const [moved] = next.splice(dragIdx, 1);
+                    next.splice(idx, 0, moved);
+                    onChange(next);
+                    setDragIdx(null);
+                  }}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-grab active:cursor-grabbing group"
+                >
+                  <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-muted-foreground" />
+                  <Checkbox
+                    checked={true}
+                    onCheckedChange={() => toggle(item.key)}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="text-xs flex-1">{item.label}</span>
+                  {item.category && (
+                    <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                  )}
+                  <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); moveUp(item.key); }}
+                      className="p-0.5 rounded hover:bg-muted text-muted-foreground"
+                      disabled={idx === 0}
+                    >
+                      <ArrowUp01 className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); moveDown(item.key); }}
+                      className="p-0.5 rounded hover:bg-muted text-muted-foreground"
+                      disabled={idx === orderedVisible.length - 1}
+                    >
+                      <ArrowDown10 className="h-3 w-3" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Hidden items */}
+          {hidden.length > 0 && (
+            <div className="p-2 border-t">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-1">
+                Verborgen ({hidden.length})
+              </div>
+              {hidden.map((item) => (
+                <div
+                  key={item.key}
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-pointer opacity-60 hover:opacity-100"
+                  onClick={() => toggle(item.key)}
+                >
+                  <div className="w-3.5" />
+                  <Checkbox
+                    checked={false}
+                    onCheckedChange={() => toggle(item.key)}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="text-xs flex-1">{item.label}</span>
+                  {item.category && (
+                    <span className="text-[9px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                      {item.category}
+                    </span>
+                  )}
+                  <Eye className="h-3 w-3 text-muted-foreground" />
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -401,6 +599,8 @@ export default function KandidatenOverzicht() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [sort, setSort] = useState<{ key: string; dir: SortDir } | null>(null);
   const [view, setView] = useState<ViewMode>('board');
+  const [tableVisibleCols, setTableVisibleCols] = useState<string[]>(DEFAULT_TABLE_VISIBLE);
+  const [boardVisibleFields, setBoardVisibleFields] = useState<string[]>(DEFAULT_BOARD_VISIBLE);
   const { data: kandidaten, isLoading } = useKandidaten(
     search ? { search } : undefined,
   );
@@ -504,6 +704,21 @@ export default function KandidatenOverzicht() {
                   Sortering opheffen
                 </Button>
               )}
+              {view === 'table' ? (
+                <ColumnChooser
+                  allItems={TABLE_COLUMNS.map((c) => ({ key: c.key, label: c.label }))}
+                  visibleKeys={tableVisibleCols}
+                  onChange={setTableVisibleCols}
+                  label="Kolommen"
+                />
+              ) : (
+                <ColumnChooser
+                  allItems={COMPLETENESS_FIELDS.map((f) => ({ key: f.key, label: f.label, category: f.category }))}
+                  visibleKeys={boardVisibleFields}
+                  onChange={setBoardVisibleFields}
+                  label="Velden"
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -516,9 +731,9 @@ export default function KandidatenOverzicht() {
                 Geen kandidaten gevonden
               </div>
             ) : view === 'board' ? (
-              <BoardView kandidaten={kandidaten} sort={sort} onSort={handleSort} />
+              <BoardView kandidaten={kandidaten} sort={sort} onSort={handleSort} visibleFieldKeys={boardVisibleFields} />
             ) : (
-              <TableView kandidaten={kandidaten} sort={sort} onSort={handleSort} clearSort={clearSort} />
+              <TableView kandidaten={kandidaten} sort={sort} onSort={handleSort} clearSort={clearSort} visibleKeys={tableVisibleCols} />
             )}
           </CardContent>
         </Card>
