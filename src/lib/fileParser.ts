@@ -24,13 +24,16 @@ export interface ParseResult {
 
 const LABEL_TO_FIELD: [RegExp, string][] = [
   // Persoonlijk
-  [/^voornaam$/i, 'voornaam'],
-  [/^achternaam$/i, 'achternaam'],
-  [/^(geslacht|m\/?v)$/i, 'geslacht'],
+  [/^(voornaam|name|naam)$/i, 'voornaam'],
+  [/^(achternaam|subnamen|familienaam)$/i, 'achternaam'],
+  [/^(geslacht|m\/?v|dv|mv)$/i, 'geslacht'],
   [/^geboortedatum$/i, 'geboortedatum'],
   [/^geboorteplaats$/i, 'geboorteplaats'],
   [/^bsn$/i, 'bsn'],
   [/^nationaliteit$/i, 'nationaliteit'],
+  [/^(groep|groepsnaam)$/i, 'activiteit'],
+  [/^(no.?show)$/i, 'no_show'],
+  [/^csn$/i, 'csn'],
   // Adres
   [/^(straat|adres)$/i, 'straat'],
   [/^postcode$/i, 'postcode'],
@@ -40,7 +43,7 @@ const LABEL_TO_FIELD: [RegExp, string][] = [
   [/^wijk$/i, 'wijk'],
   [/^gebied$/i, 'gebied'],
   // Contact
-  [/^(telefoon|telefoonnummer|tel|mobiel)$/i, 'telefoon'],
+  [/^(telefoon|telefoonnummer|tel|mobiel|mallades.?aanmelder)$/i, 'telefoon'],
   [/^(e-?mail|emailadres)$/i, 'email'],
   [/^(contactpersoon|noodcontact)$/i, 'contactpersoon'],
   [/^whatsapp$/i, 'whatsapp'],
@@ -48,11 +51,20 @@ const LABEL_TO_FIELD: [RegExp, string][] = [
   [/^rijbewijs$/i, 'rijbewijs'],
   [/^zorgverzekering$/i, 'zorgverzekering'],
   // Financieel
-  [/^uitkering$/i, 'uitkering'],
+  [/^(uitkering|uittering)$/i, 'uitkering'],
   [/^toestemming$/i, 'toestemming'],
   [/^klantmanager$/i, 'klantmanager'],
   // Verwijzing
-  [/^(door.?wie.?bekend|verwezen.?door|verwijzer)$/i, 'door_wie_bekend'],
+  [/^(door.?wie.?bekend|verwezen.?door|verwijzer|aanmelder)$/i, 'door_wie_bekend'],
+  [/^(aanmeld.?organisatie|aanmeldorganisatie)$/i, 'aanmeld_organisatie'],
+  [/^(stavaza|status|sta.?va.?za)$/i, 'uitstroom_status'],
+  [/^(uitstroom|uitstroom.?opmerkingen|uitstroomstatus)$/i, 'uitstroom_status'],
+  [/^(werkcoach|loopbaan|werkcoach.?en.?loopbaan)$/i, 'klantmanager'],
+  [/^(1e.?training|training.?1)$/i, 'certificaat_voorkeur_1'],
+  [/^(2e.?training|training.?2)$/i, 'certificaat_voorkeur_2'],
+  [/^(resultaat|resultaat.?datum|geslaagd)$/i, 'certificaten_behaald'],
+  [/^(toewij?zen.?aan|jrtte.?toewij?zen)$/i, 'intake_door'],
+  [/^(goedkeuring.?km)$/i, 'eigen_vervoer'],
   // Sector
   [/^(gewenste.?sector|sector)$/i, 'gewenste_sector'],
   [/^(certificaat.?voorkeur.?1|1e.?certificaat)$/i, 'certificaat_voorkeur_1'],
@@ -109,6 +121,7 @@ const LABEL_TO_FIELD: [RegExp, string][] = [
 const BOOLEAN_FIELDS = new Set([
   'whatsapp', 'eigen_vervoer', 'rijbewijs', 'toestemming',
   'heeft_schulden', 'aanraking_politie_justitie', 'heeft_cv',
+  'no_show', 'eenoudergezin',
 ]);
 
 // Array fields (comma-separated in input)
@@ -185,23 +198,14 @@ function parseCellValue(field: string, raw: unknown): string | string[] | boolea
 // Excel / CSV parser
 // ---------------------------------------------------------------------------
 
-export function parseExcel(buffer: ArrayBuffer, fileName: string): ParseResult {
-  const warnings: string[] = [];
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
-
-  if (rows.length === 0) {
-    return { kandidaten: [], warnings: ['Geen rijen gevonden in het bestand'], source: 'excel' };
-  }
-
-  // Map headers to fields
-  const headers = Object.keys(rows[0]);
+/**
+ * Try to map a set of headers to known fields. Returns the map and match count.
+ */
+function buildHeaderMap(headers: string[]): { headerMap: Record<string, string>; unmapped: string[]; matchCount: number } {
   const headerMap: Record<string, string> = {};
   const unmapped: string[] = [];
-
   for (const header of headers) {
+    if (header.startsWith('__EMPTY')) continue; // skip xlsx empty-column placeholders
     const field = matchField(header);
     if (field) {
       headerMap[header] = field;
@@ -209,12 +213,51 @@ export function parseExcel(buffer: ArrayBuffer, fileName: string): ParseResult {
       unmapped.push(header);
     }
   }
+  return { headerMap, unmapped, matchCount: Object.keys(headerMap).length };
+}
+
+export function parseExcel(buffer: ArrayBuffer, fileName: string): ParseResult {
+  const warnings: string[] = [];
+  const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
+  const sheetName = workbook.SheetNames[0];
+  const sheet = workbook.Sheets[sheetName];
+
+  // First try default (row 1 as header)
+  let rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: null });
+
+  if (rows.length === 0) {
+    return { kandidaten: [], warnings: ['Geen rijen gevonden in het bestand'], source: 'excel' };
+  }
+
+  let headers = Object.keys(rows[0]);
+  let { headerMap, unmapped, matchCount } = buildHeaderMap(headers);
+
+  // Auto-detect header row: if few matches found with row 1, try rows 2-5
+  if (matchCount < 2) {
+    const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null }) as unknown[][];
+    for (let headerIdx = 1; headerIdx < Math.min(rawRows.length, 6); headerIdx++) {
+      const candidateHeaders = (rawRows[headerIdx] ?? []).map((h) => String(h ?? '').trim()).filter(Boolean);
+      if (candidateHeaders.length < 2) continue;
+
+      const trial = buildHeaderMap(candidateHeaders);
+      if (trial.matchCount > matchCount) {
+        // Re-parse with this row as header
+        rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+          defval: null,
+          range: headerIdx,
+        });
+        headers = Object.keys(rows[0] ?? {});
+        ({ headerMap, unmapped, matchCount } = buildHeaderMap(headers));
+        if (matchCount >= 2) break;
+      }
+    }
+  }
 
   if (unmapped.length > 0) {
     warnings.push(`Niet-herkende kolommen: ${unmapped.join(', ')}`);
   }
 
-  if (!Object.values(headerMap).includes('voornaam') || !Object.values(headerMap).includes('achternaam')) {
+  if (!Object.values(headerMap).includes('voornaam') && !Object.values(headerMap).includes('achternaam')) {
     warnings.push('Let op: kolommen "voornaam" en/of "achternaam" niet gevonden. Deze zijn verplicht.');
   }
 
