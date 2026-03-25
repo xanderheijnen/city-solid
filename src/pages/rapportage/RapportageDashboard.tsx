@@ -13,6 +13,8 @@ import {
   LineChart as LineChartIcon,
   Layers,
   Circle,
+  Maximize2,
+  X,
 } from 'lucide-react';
 import {
   BarChart,
@@ -29,6 +31,10 @@ import {
   Legend,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import { ActiviteitFilter } from '@/components/rapportage/ActiviteitFilter';
 import {
   useRapportageDeelnemers,
@@ -57,24 +63,34 @@ const CHART_CONFIGS: ChartConfig[] = [
 function SwitchableChart({
   data,
   chartType,
+  height = 250,
+  fontSize = 12,
+  outerRadius = 90,
+  innerRadius,
 }: {
   data: { name: string; value: number }[];
   chartType: ChartType;
+  height?: number;
+  fontSize?: number;
+  outerRadius?: number;
+  innerRadius?: number;
 }) {
   if (!data || data.length === 0) {
-    return <div className="flex h-[250px] items-center justify-center text-muted-foreground">Geen data</div>;
+    return <div className="flex items-center justify-center text-muted-foreground" style={{ height }}>Geen data</div>;
   }
+
+  const donutInner = innerRadius ?? (chartType === 'donut' ? Math.round(outerRadius * 0.55) : 0);
 
   if (chartType === 'pie' || chartType === 'donut') {
     return (
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={height}>
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            innerRadius={chartType === 'donut' ? 50 : 0}
-            outerRadius={90}
+            innerRadius={donutInner}
+            outerRadius={outerRadius}
             dataKey="value"
             nameKey="name"
             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
@@ -92,9 +108,9 @@ function SwitchableChart({
 
   if (chartType === 'line') {
     return (
-      <ResponsiveContainer width="100%" height={250}>
+      <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data}>
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+          <XAxis dataKey="name" tick={{ fontSize }} />
           <YAxis allowDecimals={false} />
           <Tooltip />
           <Line type="monotone" dataKey="value" stroke={COLORS[1]} strokeWidth={2} dot={{ r: 4 }} />
@@ -103,11 +119,11 @@ function SwitchableChart({
     );
   }
 
-  // bar or stacked (stacked shows same as bar for single series)
+  // bar or stacked
   return (
-    <ResponsiveContainer width="100%" height={250}>
+    <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data}>
-        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+        <XAxis dataKey="name" tick={{ fontSize }} />
         <YAxis allowDecimals={false} />
         <Tooltip />
         <Bar dataKey="value" fill={COLORS[0]} radius={[4, 4, 0, 0]}>
@@ -123,6 +139,7 @@ function SwitchableChart({
 export default function RapportageDashboard() {
   const [activiteit, setActiviteit] = useState<string | undefined>(undefined);
   const [chartTypes, setChartTypes] = useState<Record<string, ChartType>>({});
+  const [expandedChart, setExpandedChart] = useState<string | null>(null);
 
   const { data: deelnemers = [], isLoading: loadingD } = useRapportageDeelnemers(activiteit);
   const { data: rubrieken = [], isLoading: loadingR } = useUitstroomRubrieken();
@@ -352,7 +369,7 @@ export default function RapportageDashboard() {
             <Card key={cfg.dataKey}>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium">{cfg.title}</CardTitle>
-                <div className="flex gap-1">
+                <div className="flex items-center gap-1">
                   {chartTypeButtons.map((btn) => {
                     const Icon = btn.icon;
                     return (
@@ -370,6 +387,13 @@ export default function RapportageDashboard() {
                       </button>
                     );
                   })}
+                  <button
+                    onClick={() => setExpandedChart(cfg.dataKey)}
+                    title="Vergroten"
+                    className="rounded p-1.5 text-muted-foreground hover:bg-muted transition-colors ml-1"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -379,6 +403,55 @@ export default function RapportageDashboard() {
           );
         })}
       </div>
+
+      {/* Expanded chart dialog */}
+      <Dialog open={!!expandedChart} onOpenChange={() => setExpandedChart(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          {expandedChart && (() => {
+            const cfg = CHART_CONFIGS.find((c) => c.dataKey === expandedChart);
+            if (!cfg) return null;
+            const currentType = chartTypes[cfg.dataKey] ?? 'bar';
+            const data = stats.charts[cfg.dataKey];
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center justify-between">
+                    <span>{cfg.title}</span>
+                    <div className="flex items-center gap-1">
+                      {chartTypeButtons.map((btn) => {
+                        const Icon = btn.icon;
+                        return (
+                          <button
+                            key={btn.type}
+                            onClick={() => setChartType(cfg.dataKey, btn.type)}
+                            title={btn.label}
+                            className={`rounded p-1.5 transition-colors ${
+                              currentType === btn.type
+                                ? 'bg-primary text-primary-foreground'
+                                : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                          >
+                            <Icon className="h-4 w-4" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="py-4">
+                  <SwitchableChart
+                    data={data}
+                    chartType={currentType}
+                    height={500}
+                    fontSize={14}
+                    outerRadius={180}
+                  />
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
