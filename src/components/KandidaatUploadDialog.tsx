@@ -45,16 +45,21 @@ const ALLOWED_INSERT_FIELDS = new Set([
   'opleiding', 'diploma_behaald', 'opleiding_niveau', 'reden_uitval',
   'cursussen_gevolgd', 'certificaten_behaald', 'werkervaring', 'waarom_lukte_niet', 'heeft_cv',
   'acties_afspraken', 'leefgebieden_aandacht',
-  'aanmeld_datum', 'intake_datum', 'intake_door', 'intake_notities',
+  'aanmeld_datum', 'intake_datum', 'intake_notities',
   'leeftijd', 'traject_status',
-  'foto_url', 'id_scan_url', 'cv_url', 'uitstroom_status',
+  'uitstroom_status',
   'activiteit', 'csn', 'no_show', 'eenoudergezin', 'verandering',
+]);
+
+// Fields that are UUID references — never accept text values from imports
+const UUID_FIELDS = new Set([
+  'created_by', 'intake_door', 'foto_url', 'id_scan_url', 'cv_url',
 ]);
 
 function filterToDbFields(k: ParsedKandidaat): Record<string, unknown> {
   const result: Record<string, unknown> = {};
   for (const [key, val] of Object.entries(k)) {
-    if (ALLOWED_INSERT_FIELDS.has(key) && val != null && val !== '') {
+    if (ALLOWED_INSERT_FIELDS.has(key) && !UUID_FIELDS.has(key) && val != null && val !== '') {
       result[key] = val;
     }
   }
@@ -153,12 +158,16 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
       setStep('preview');
 
       // Audit log: file parsed
-      logAudit.mutate({
-        actie: 'create',
-        object_type: 'import',
-        omschrijving: `Bestand "${f.name}" verwerkt: ${parseResult.kandidaten.length} kandidaten herkend, ${parseResult.warnings.length} waarschuwingen`,
-        nieuwe_waarden: { bestandsnaam: f.name, bron: parseResult.source, kandidaten: parseResult.kandidaten.length, warnings: parseResult.warnings },
-      });
+      try {
+        await logAudit.mutateAsync({
+          actie: 'create',
+          object_type: 'import',
+          omschrijving: `Bestand "${f.name}" verwerkt: ${parseResult.kandidaten.length} kandidaten herkend, ${parseResult.warnings.length} waarschuwingen`,
+          nieuwe_waarden: { bestandsnaam: f.name, bron: parseResult.source, kandidaten: parseResult.kandidaten.length, warnings: parseResult.warnings },
+        });
+      } catch (auditErr) {
+        console.error('Audit log fout:', auditErr);
+      }
 
       // Log parsing result (including failures with 0 candidates)
       if (parseResult.kandidaten.length === 0 || parseResult.warnings.length > 0) {
@@ -272,12 +281,16 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
     }
 
     // Audit log: import completed
-    logAudit.mutate({
-      actie: 'create',
-      object_type: 'import',
-      omschrijving: `Import "${file?.name ?? 'onbekend'}": ${kandidaten.length - errors.length}/${kandidaten.length} succesvol, ${errors.length} fouten`,
-      nieuwe_waarden: { bestandsnaam: file?.name, succesvol: kandidaten.length - errors.length, mislukt: errors.length, fouten: errors },
-    });
+    try {
+      await logAudit.mutateAsync({
+        actie: 'create',
+        object_type: 'import',
+        omschrijving: `Import "${file?.name ?? 'onbekend'}": ${kandidaten.length - errors.length}/${kandidaten.length} succesvol, ${errors.length} fouten`,
+        nieuwe_waarden: { bestandsnaam: file?.name, succesvol: kandidaten.length - errors.length, mislukt: errors.length, fouten: errors },
+      });
+    } catch (auditErr) {
+      console.error('Audit log fout:', auditErr);
+    }
 
     setSaveErrors(errors);
     setStep('done');

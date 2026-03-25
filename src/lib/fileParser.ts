@@ -63,7 +63,7 @@ const LABEL_TO_FIELD: [RegExp, string][] = [
   [/^(1e.?training|training.?1)$/i, 'certificaat_voorkeur_1'],
   [/^(2e.?training|training.?2)$/i, 'certificaat_voorkeur_2'],
   [/^(resultaat|resultaat.?datum|geslaagd)$/i, 'certificaten_behaald'],
-  [/^(toewij?zen.?aan|jrtte.?toewij?zen)$/i, 'intake_door'],
+  [/^(toewij?zen.?aan|jrtte.?toewij?zen)$/i, 'intake_notities'],
   [/^(goedkeuring.?km)$/i, 'eigen_vervoer'],
   // Sector
   [/^(gewenste.?sector|sector)$/i, 'gewenste_sector'],
