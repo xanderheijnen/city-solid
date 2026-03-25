@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Optie } from '@/lib/types';
 
@@ -53,6 +53,109 @@ export function useAllOpties() {
       return data as Optie[];
     },
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// useAllOptiesIncludingInactive – for admin management
+// ---------------------------------------------------------------------------
+
+export function useAllOptiesIncludingInactive(categorie?: string) {
+  return useQuery({
+    queryKey: [...optieKeys.all, 'admin', categorie ?? 'all'] as const,
+    queryFn: async () => {
+      let query = supabase
+        .from('cs_opties')
+        .select('*')
+        .order('volgorde', { ascending: true });
+
+      if (categorie) {
+        query = query.eq('categorie', categorie);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Optie[];
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Mutations: create, update, delete
+// ---------------------------------------------------------------------------
+
+export function useCreateOptie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (optie: { categorie: string; waarde: string; volgorde?: number }) => {
+      const { data, error } = await supabase
+        .from('cs_opties')
+        .insert({
+          categorie: optie.categorie,
+          waarde: optie.waarde,
+          volgorde: optie.volgorde ?? 0,
+          is_actief: true,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Optie;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: optieKeys.all });
+    },
+  });
+}
+
+export function useUpdateOptie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Optie> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('cs_opties')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data as Optie;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: optieKeys.all });
+    },
+  });
+}
+
+export function useDeleteOptie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      // Soft delete
+      const { error } = await supabase
+        .from('cs_opties')
+        .update({ is_actief: false, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: optieKeys.all });
+    },
+  });
+}
+
+export function useRestoreOptie() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('cs_opties')
+        .update({ is_actief: true, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: optieKeys.all });
+    },
   });
 }
 

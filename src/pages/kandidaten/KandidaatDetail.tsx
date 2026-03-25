@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File, LogOut, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Edit, FileText, Loader2, Plus, Trash2, Lock, Download, Award, CheckCircle2, Clock, XCircle, UserMinus, CalendarPlus, Upload, Camera, CreditCard, File, LogOut, MessageSquare, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { useKandidaat, useUpdateKandidaat, useDeleteKandidaatAVG, useUpdateTraje
 import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNotities';
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useOpties } from '@/hooks/useOpties';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
 import type { Geslacht, Notitie, Resultaat } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +34,75 @@ function InfoRow({ label, value }: { label: string; value: string | null | undef
       <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
       <dd className="col-span-2 text-sm">{display}</dd>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Trajecten multi-select section
+// ---------------------------------------------------------------------------
+
+function TrajectenSection({ kandidaat }: { kandidaat: { id: string; gewenst_project: string[] | null } }) {
+  const { data: trajectOpties } = useOpties('traject');
+  const updateKandidaat = useUpdateKandidaat();
+  const selected = kandidaat.gewenst_project ?? [];
+
+  const toggle = (waarde: string) => {
+    const next = selected.includes(waarde)
+      ? selected.filter((v) => v !== waarde)
+      : [...selected, waarde];
+    updateKandidaat.mutate(
+      { id: kandidaat.id, gewenst_project: next },
+      { onError: () => toast.error('Fout bij opslaan trajecten') },
+    );
+  };
+
+  const COLORS = [
+    'bg-yellow-100 text-yellow-800 border-yellow-300',
+    'bg-blue-100 text-blue-800 border-blue-300',
+    'bg-green-100 text-green-800 border-green-300',
+    'bg-purple-100 text-purple-800 border-purple-300',
+    'bg-orange-100 text-orange-800 border-orange-300',
+    'bg-pink-100 text-pink-800 border-pink-300',
+  ];
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Trajecten</CardTitle></CardHeader>
+      <CardContent>
+        {!trajectOpties?.length ? (
+          <p className="text-sm text-muted-foreground">Geen trajecten geconfigureerd. Ga naar Instellingen → Opties om trajecten toe te voegen.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {trajectOpties.map((opt, i) => {
+              const isSelected = selected.includes(opt.waarde);
+              return (
+                <button
+                  key={opt.id}
+                  onClick={() => toggle(opt.waarde)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
+                    isSelected
+                      ? COLORS[i % COLORS.length]
+                      : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/60'
+                  }`}
+                >
+                  <div className={`w-3 h-3 rounded-sm border flex items-center justify-center ${
+                    isSelected ? 'bg-current/20 border-current' : 'border-muted-foreground/40'
+                  }`}>
+                    {isSelected && <Check className="w-2.5 h-2.5" />}
+                  </div>
+                  {opt.waarde}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {selected.length > 0 && (
+          <p className="text-xs text-muted-foreground mt-2">
+            {selected.length} traject{selected.length !== 1 ? 'en' : ''} gekoppeld
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -570,6 +640,8 @@ export default function KandidaatDetail() {
                 </dl>
               </CardContent>
             </Card>
+
+            <TrajectenSection kandidaat={kandidaat} />
 
             <Card>
               <CardHeader><CardTitle className="text-base">Sector & Voorkeur</CardTitle></CardHeader>
