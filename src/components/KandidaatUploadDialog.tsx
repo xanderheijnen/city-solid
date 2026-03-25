@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { parseFile, getFileType, KANDIDAAT_FIELD_LABELS } from '@/lib/fileParser';
 import type { ParsedKandidaat, ParseResult } from '@/lib/fileParser';
 import { useCreateKandidaat } from '@/hooks/useKandidaten';
+import { useLogAudit } from '@/hooks/useAuditLog';
 import { supabase } from '@/integrations/supabase/client';
 
 // ---------------------------------------------------------------------------
@@ -118,6 +119,7 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
   const [saveErrors, setSaveErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createKandidaat = useCreateKandidaat();
+  const logAudit = useLogAudit();
 
   // ── Reset ──
   const reset = useCallback(() => {
@@ -149,8 +151,48 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
       setResult(parseResult);
       setKandidaten(parseResult.kandidaten);
       setStep('preview');
+
+      // Audit log: file parsed
+      logAudit.mutate({
+        actie: 'create',
+        object_type: 'import',
+        omschrijving: `Bestand "${f.name}" verwerkt: ${parseResult.kandidaten.length} kandidaten herkend, ${parseResult.warnings.length} waarschuwingen`,
+        nieuwe_waarden: { bestandsnaam: f.name, bron: parseResult.source, kandidaten: parseResult.kandidaten.length, warnings: parseResult.warnings },
+      });
+
+      // Log parsing result (including failures with 0 candidates)
+      if (parseResult.kandidaten.length === 0 || parseResult.warnings.length > 0) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          await supabase.from('cs_import_log').insert({
+            bestandsnaam: f.name,
+            bron: parseResult.source ?? 'onbekend',
+            aantal_rijen: 0,
+            aantal_succesvol: parseResult.kandidaten.length,
+            aantal_mislukt: 0,
+            fouten: parseResult.warnings,
+            geimporteerd_door: user?.id ?? null,
+          });
+        } catch { /* non-critical */ }
+      }
     } catch (err) {
-      toast.error('Fout bij verwerken: ' + (err instanceof Error ? err.message : String(err)));
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      toast.error('Fout bij verwerken: ' + errorMsg);
+
+      // Log parse error to import log
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('cs_import_log').insert({
+          bestandsnaam: f.name,
+          bron: 'onbekend',
+          aantal_rijen: 0,
+          aantal_succesvol: 0,
+          aantal_mislukt: 1,
+          fouten: [`Parse error: ${errorMsg}`],
+          geimporteerd_door: user?.id ?? null,
+        });
+      } catch { /* non-critical */ }
+
       setStep('upload');
     }
   }, []);
@@ -228,6 +270,14 @@ export function KandidaatUploadDialog({ open, onOpenChange }: Props) {
     } catch {
       // Non-critical: don't block UI if logging fails
     }
+
+    // Audit log: import completed
+    logAudit.mutate({
+      actie: 'create',
+      object_type: 'import',
+      omschrijving: `Import "${file?.name ?? 'onbekend'}": ${kandidaten.length - errors.length}/${kandidaten.length} succesvol, ${errors.length} fouten`,
+      nieuwe_waarden: { bestandsnaam: file?.name, succesvol: kandidaten.length - errors.length, mislukt: errors.length, fouten: errors },
+    });
 
     setSaveErrors(errors);
     setStep('done');
