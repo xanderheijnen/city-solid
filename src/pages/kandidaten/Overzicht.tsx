@@ -492,8 +492,8 @@ function ColumnChooser({ allItems, visibleKeys, onChange, label }: {
             </Button>
           </div>
         </div>
-        <ScrollArea className="max-h-[400px]">
-          {/* Visible items - reorderable */}
+        {/* Visible items - scrollable */}
+        <ScrollArea className={cn(hidden.length > 0 ? 'max-h-[280px]' : 'max-h-[400px]')}>
           {orderedVisible.length > 0 && (
             <div className="p-2">
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-1">
@@ -552,17 +552,20 @@ function ColumnChooser({ allItems, visibleKeys, onChange, label }: {
               ))}
             </div>
           )}
+        </ScrollArea>
 
-          {/* Hidden items */}
-          {hidden.length > 0 && (
-            <div className="p-2 border-t">
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-1">
-                Verborgen ({hidden.length})
+        {/* Hidden items - always visible at bottom, own scroll */}
+        {hidden.length > 0 && (
+          <ScrollArea className="max-h-[180px] border-t">
+            <div className="p-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold px-2 mb-1 flex items-center gap-1.5">
+                <EyeOff className="h-3 w-3" />
+                Verborgen ({hidden.length}) — klik om zichtbaar te maken
               </div>
               {hidden.map((item) => (
                 <div
                   key={item.key}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 cursor-pointer opacity-60 hover:opacity-100"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-primary/5 cursor-pointer opacity-60 hover:opacity-100 transition-opacity"
                   onClick={() => toggle(item.key)}
                 >
                   <div className="w-3.5" />
@@ -577,12 +580,12 @@ function ColumnChooser({ allItems, visibleKeys, onChange, label }: {
                       {item.category}
                     </span>
                   )}
-                  <Eye className="h-3 w-3 text-muted-foreground" />
+                  <Eye className="h-3 w-3 text-primary" />
                 </div>
               ))}
             </div>
-          )}
-        </ScrollArea>
+          </ScrollArea>
+        )}
       </PopoverContent>
     </Popover>
   );
