@@ -22,6 +22,8 @@ import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useOpties } from '@/hooks/useOpties';
 import { useLogAudit } from '@/hooks/useAuditLog';
+import { useSensitiveKandidaatData } from '@/hooks/useSensitiveData';
+import { Shield, ShieldOff } from 'lucide-react';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
 import type { Geslacht, Notitie, Resultaat } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -404,6 +406,7 @@ export default function KandidaatDetail() {
   // ── File uploads ──
   const { upload: uploadFile, uploading: fileUploading, getSignedUrl } = useFileUpload();
   const logAudit = useLogAudit();
+  const { data: sensitiveData, isLoading: sensitiveLoading, isAuthorized: hasSensitiveAccess } = useSensitiveKandidaatData(id);
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const idScanInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -697,16 +700,88 @@ export default function KandidaatDetail() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader><CardTitle className="text-base">Schulden</CardTitle></CardHeader>
-              <CardContent>
-                <dl>
-                  <InfoRow label="Heeft schulden" value={kandidaat.heeft_schulden} />
-                  <InfoRow label="Reden en bedrag" value={kandidaat.schulden_reden_bedrag} />
-                  <InfoRow label="Afspraken schuldhulp" value={kandidaat.schulden_afspraken} />
-                </dl>
-              </CardContent>
-            </Card>
+            {/* ── Gevoelige data secties (Zone B) — alleen admin/intaker ── */}
+            {hasSensitiveAccess ? (
+              sensitiveLoading ? (
+                <Card>
+                  <CardContent className="flex items-center justify-center h-24">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  <Card className="border-amber-200 bg-amber-50/30">
+                    <CardHeader className="flex flex-row items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600" />
+                      <CardTitle className="text-base text-amber-800">Gezondheid & Middelen</CardTitle>
+                      <Badge variant="outline" className="ml-auto text-[10px] text-amber-600 border-amber-300">Zone B — Gevoelig</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <dl>
+                        <InfoRow label="Medische bijzonderheden" value={sensitiveData?.medische_bijzonderheden} />
+                        <InfoRow label="Middelengebruik" value={sensitiveData?.middelengebruik} />
+                      </dl>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-amber-200 bg-amber-50/30">
+                    <CardHeader className="flex flex-row items-center gap-2">
+                      <Shield className="h-4 w-4 text-amber-600" />
+                      <CardTitle className="text-base text-amber-800">Schulden</CardTitle>
+                      <Badge variant="outline" className="ml-auto text-[10px] text-amber-600 border-amber-300">Zone B — Gevoelig</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <dl>
+                        <InfoRow label="Heeft schulden" value={sensitiveData?.heeft_schulden} />
+                        <InfoRow label="Reden en bedrag" value={sensitiveData?.schulden_reden_bedrag} />
+                        <InfoRow label="Afspraken schuldhulp" value={sensitiveData?.schulden_afspraken} />
+                      </dl>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-red-200 bg-red-50/30">
+                    <CardHeader className="flex flex-row items-center gap-2">
+                      <Shield className="h-4 w-4 text-red-600" />
+                      <CardTitle className="text-base text-red-800">Justitieel verleden</CardTitle>
+                      <Badge variant="outline" className="ml-auto text-[10px] text-red-600 border-red-300">Zone B — Gevoelig</Badge>
+                    </CardHeader>
+                    <CardContent>
+                      <dl>
+                        <InfoRow label="Aanraking politie/justitie" value={sensitiveData?.aanraking_politie_justitie} />
+                        <InfoRow label="Reden" value={sensitiveData?.aanraking_reden} />
+                        <InfoRow label="Veroordeeld / detentie" value={sensitiveData?.veroordeeld_detentie} />
+                        <InfoRow label="Lopende zaken" value={sensitiveData?.lopende_zaken} />
+                      </dl>
+                    </CardContent>
+                  </Card>
+
+                  {sensitiveData?.bsn_last4 && (
+                    <Card className="border-red-200 bg-red-50/30">
+                      <CardHeader className="flex flex-row items-center gap-2">
+                        <Shield className="h-4 w-4 text-red-600" />
+                        <CardTitle className="text-base text-red-800">BSN</CardTitle>
+                        <Badge variant="outline" className="ml-auto text-[10px] text-red-600 border-red-300">Zone B — Kritiek</Badge>
+                      </CardHeader>
+                      <CardContent>
+                        <dl>
+                          <InfoRow label="BSN (laatste 4 cijfers)" value={`****${sensitiveData.bsn_last4}`} />
+                        </dl>
+                      </CardContent>
+                    </Card>
+                  )}
+                </>
+              )
+            ) : (
+              <Card className="border-muted bg-muted/20">
+                <CardContent className="flex items-center gap-3 p-6">
+                  <ShieldOff className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Gevoelige gegevens</p>
+                    <p className="text-xs text-muted-foreground">Gezondheid, schulden, justitie en BSN — alleen zichtbaar voor admin en intaker.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader><CardTitle className="text-base">Opleidingen</CardTitle></CardHeader>
