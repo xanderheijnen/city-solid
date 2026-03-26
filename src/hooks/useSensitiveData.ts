@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useRole } from '@/hooks/useRole';
-import { useAuth } from '@/hooks/useAuth';
+import { apiFetch } from '@/lib/api';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,34 +31,18 @@ export const sensitiveKeys = {
 };
 
 // ---------------------------------------------------------------------------
-// useSensitiveKandidaatData – fetch sensitive record with access logging
+// useSensitiveKandidaatData – fetch via backend (Zone B)
+// Access logging happens server-side, not bypassable
 // ---------------------------------------------------------------------------
 
 export function useSensitiveKandidaatData(kandidaatId: string | undefined) {
-  const { user } = useAuth();
   const { hasAnyRole } = useRole();
-
   const isAuthorized = hasAnyRole(['admin', 'intaker']);
 
   const query = useQuery({
     queryKey: sensitiveKeys.detail(kandidaatId ?? ''),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('cs_kandidaten_sensitive')
-        .select('*')
-        .eq('kandidaat_id', kandidaatId!)
-        .single();
-
-      if (error) throw error;
-
-      // Log access after successful fetch
-      await supabase.from('cs_sensitive_access_log').insert({
-        user_id: user!.id,
-        kandidaat_id: kandidaatId!,
-        action: 'VIEW_SENSITIVE',
-      });
-
-      return data as SensitiveKandidaatData;
+      return apiFetch<SensitiveKandidaatData>(`/api/sensitive/${kandidaatId}`);
     },
     enabled: !!kandidaatId && isAuthorized,
   });
@@ -72,7 +55,7 @@ export function useSensitiveKandidaatData(kandidaatId: string | undefined) {
 }
 
 // ---------------------------------------------------------------------------
-// useUpdateSensitiveData – mutation for updating sensitive fields
+// useUpdateSensitiveData – mutation via backend (Zone B)
 // ---------------------------------------------------------------------------
 
 export function useUpdateSensitiveData() {
@@ -83,19 +66,14 @@ export function useUpdateSensitiveData() {
       kandidaat_id,
       ...updates
     }: { kandidaat_id: string } & Partial<Omit<SensitiveKandidaatData, 'kandidaat_id'>>) => {
-      const { data, error } = await supabase
-        .from('cs_kandidaten_sensitive')
-        .update(updates)
-        .eq('kandidaat_id', kandidaat_id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data as SensitiveKandidaatData;
+      return apiFetch<{ ok: boolean }>(`/api/sensitive/${kandidaat_id}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      });
     },
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: sensitiveKeys.detail(data.kandidaat_id),
+        queryKey: sensitiveKeys.detail(variables.kandidaat_id),
       });
     },
   });
