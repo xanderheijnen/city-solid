@@ -107,7 +107,7 @@ export function useKandidaten(filters?: KandidaatFilters) {
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Kandidaat[];
+      return data as unknown as Kandidaat[];
     },
   });
 }
@@ -127,7 +127,7 @@ export function useKandidaat(id: string | undefined) {
         .single();
 
       if (error) throw error;
-      return data as Kandidaat;
+      return data as unknown as Kandidaat;
     },
     enabled: !!id,
   });

@@ -82,8 +82,9 @@ export function useRapportageDeelnemers(activiteit?: string) {
         query = query.eq('activiteit', activiteit);
       }
 
-      const { data: kandidaten, error: kErr } = await query;
+      const { data: rawKandidaten, error: kErr } = await query;
       if (kErr) throw kErr;
+      const kandidaten = (rawKandidaten ?? []) as unknown as Kandidaat[];
 
       // 2. Fetch rubrieken mapping
       const { data: rubrieken } = await supabase
