@@ -95,6 +95,17 @@ Ondersteunde bestandsformaten:
 Na het uploaden zie je een **preview** van de herkende kandidaten. Je kunt velden aanpassen of kandidaten verwijderen voordat je definitief importeert.`,
         tags: ['upload', 'importeren', 'batch', 'excel', 'csv', 'word', 'pdf', 'afbeelding', 'ocr'],
       },
+      {
+        title: 'Intakegesprekken',
+        body: `De pagina **Intakegesprekken** toont alle kandidaten met een gepland intakegesprek. Hier zie je:
+
+• **Naam** en **contactgegevens** van de kandidaat
+• **Datum en tijd** van het geplande gesprek
+• **Status** — gepland of afgerond
+
+Klik op een kandidaat om het intakegesprek uit te voeren via het intake-formulier.`,
+        tags: ['intakegesprekken', 'intake', 'gepland', 'gesprek'],
+      },
     ],
   },
   {
@@ -140,9 +151,12 @@ Op het Persoon-tab staat een "Trajecten" sectie met gekleurde chips. Klik op een
 **Bestanden uploaden en bekijken:**
 Upload een pasfoto, ID-scan of CV. Klik op "Bekijken" om het bestand te openen in een nieuw tabblad. Je kunt bestanden ook vervangen of verwijderen.
 
+**Gevoelige gegevens (Zone B):**
+Secties zoals Gezondheid & Middelen, Schulden, Justitieel verleden en BSN zijn alleen zichtbaar voor **admin** en **intaker**. Deze secties zijn gemarkeerd met een schildicoon en "Zone B — Gevoelig" badge. Trainers, managers en readonly-gebruikers zien de melding "Gevoelige gegevens — alleen zichtbaar voor admin en intaker". Elke inzage wordt automatisch gelogd.
+
 **Uitstroom beheren:**
 Op het Uitstroom-tab kun je de uitstroomstatus instellen en gespreksupdates toevoegen.`,
-        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport', 'uitstroom', 'foto', 'id scan', 'cv', 'upload', 'bestanden', 'trajecten', 'bekijken'],
+        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport', 'uitstroom', 'foto', 'id scan', 'cv', 'upload', 'bestanden', 'trajecten', 'bekijken', 'zone b', 'gevoelig'],
       },
       {
         title: 'Intake uitvoeren',
@@ -295,6 +309,30 @@ Je kunt rollen toewijzen of verwijderen via de **"Rol"**-knop naast elke gebruik
 Per categorie kun je waarden **toevoegen**, **bewerken** (inline klikken), **verwijderen** (soft-delete) en **herstellen**. Verwijderde waarden worden niet meer getoond in dropdowns maar de data blijft behouden.`,
         tags: ['opties', 'instellingen', 'wijk', 'gebied', 'uitkering', 'traject', 'klantmanager', 'beheer', 'keuzelijst'],
       },
+      {
+        title: 'Vragenlijst Beheer',
+        body: `Onder **Instellingen → Vragenlijst Kandidaten** kun je de intake- en aanmeldingsformulieren configureren:
+
+• **Tabs**: Intake en Aanmelding — elk met hun eigen secties en velden
+• Per veld: **label bewerken**, **verplicht maken** (toggle), **actief/inactief** zetten
+• **Nieuwe velden toevoegen** per sectie
+• **Secties toevoegen** om het formulier uit te breiden
+
+Wijzigingen worden direct doorgevoerd in het intake- en aanmeldingsformulier.`,
+        tags: ['vragenlijst', 'beheer', 'formulier', 'intake', 'aanmelding', 'verplicht', 'velden'],
+      },
+      {
+        title: 'Audit Log',
+        body: `Onder **Instellingen → Audit Log** vind je een onwijzigbaar logboek van alle belangrijke acties in het systeem:
+
+• **Aanmaken, wijzigen en verwijderen** van kandidaten, trainingen en groepen
+• **Exports** — wie heeft welk rapport geëxporteerd
+• **Imports** — bestanden die zijn geüpload met resultaat
+• **Inzage gevoelige data** — wie heeft Zone B data bekeken
+
+Het audit log kan niet worden bewerkt of verwijderd. Alleen admin en manager kunnen het log inzien.`,
+        tags: ['audit', 'log', 'logboek', 'wijzigingen', 'acties', 'export', 'import'],
+      },
     ],
   },
   {
@@ -394,15 +432,17 @@ Alle data wordt automatisch berekend op basis van de deelnemersgegevens.`,
     content: [
       {
         title: 'Intake-rapport exporteren',
-        body: `Vanuit de kandidaat-detailpagina kun je een **Word-rapport** exporteren met alle intakegegevens. Dit rapport bevat alle 14 secties van het intakeformulier en is geschikt om af te drukken of te delen.
+        body: `Vanuit de kandidaat-detailpagina kun je een **Word-rapport** exporteren met alle intakegegevens. Dit rapport bevat alle 14 secties van het intakeformulier.
 
-Klik op de **"Export"**-knop in de kandidaat-detailpagina om het rapport te genereren.`,
-        tags: ['export', 'rapport', 'word', 'intakerapport', 'afdrukken'],
+**Let op:** Exports zijn alleen beschikbaar voor **admin** en **intaker** rollen. Elke export wordt gelogd in het audit log.
+
+Klik op de **"Export"**-knop op het Documenten-tab om het rapport te genereren.`,
+        tags: ['export', 'rapport', 'word', 'intakerapport', 'afdrukken', 'admin', 'intaker'],
       },
       {
-        title: 'Kandidatenlijst exporteren',
-        body: `Vanuit het kandidaatoverzicht kun je de volledige lijst exporteren naar Excel. Dit bevat alle zichtbare kolommen en is handig voor rapportages of externe communicatie.`,
-        tags: ['export', 'excel', 'kandidatenlijst', 'rapportage'],
+        title: 'CSV export (Rapportage)',
+        body: `Vanuit **Rapportage → Deelnemers** kun je de deelnemerslijst exporteren naar CSV. De export bevat operationele gegevens (activiteit, wijk, gebied, certificaten) maar **geen gevoelige data** (BSN, medisch, justitie). CSV-waarden zijn beveiligd tegen formula-injectie.`,
+        tags: ['export', 'csv', 'rapportage', 'deelnemers'],
       },
     ],
   },
@@ -420,14 +460,26 @@ Als je je wachtwoord bent vergeten, neem contact op met een beheerder om een nie
       },
       {
         title: 'Gegevensbeveiliging',
-        body: `City Solid maakt gebruik van **Supabase** als backend met:
+        body: `City Solid gebruikt een **3-zone beveiligingsmodel**:
 
-• **Row Level Security (RLS)** — gebruikers kunnen alleen gegevens zien waartoe ze geautoriseerd zijn
-• **Versleutelde verbinding** — alle communicatie verloopt via HTTPS
-• **Audit Log** — alle wijzigingen worden bijgehouden onder Beheer → Audit Log
+**Zone A — Operationele data** (alle geauthenticeerde gebruikers):
+Kandidaatgegevens (naam, contact, traject), trainingen, notities, voortgang en rapportages.
 
-Persoonsgegevens van kandidaten worden vertrouwelijk behandeld conform de AVG.`,
-        tags: ['beveiliging', 'privacy', 'rls', 'avg', 'audit', 'versleuteling'],
+**Zone B — Gevoelige persoonsgegevens** (alleen admin en intaker):
+BSN, medische informatie, middelengebruik, justitieel verleden en schulden. Deze data is opgeslagen in een aparte tabel met strikte toegangscontrole. Elke inzage wordt gelogd.
+
+**Zone C — Identiteitsdocumenten** (maximaal beschermd):
+ID-scans worden opgeslagen in een aparte beveiligde opslag met korte toegangslinks (5 minuten).
+
+**Technische maatregelen:**
+• **Row Level Security (RLS)** op alle 16 tabellen
+• **Signed URLs** voor bestanden (niet publiek toegankelijk)
+• **Content Security Policy** headers tegen XSS
+• **Onwijzigbaar audit log** voor alle acties
+• **Error Boundary** — bij fouten worden geen technische details getoond
+
+Zie **SECURITY.md** in de projectmap voor het volledige beveiligingsdocument.`,
+        tags: ['beveiliging', 'privacy', 'rls', 'avg', 'audit', 'versleuteling', 'zone', 'bsn', 'gevoelig', '3-zone'],
       },
     ],
   },
@@ -615,9 +667,27 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: 'Is de data beveiligd?',
-    answer: 'Ja. Alle data wordt versleuteld verzonden (HTTPS), opgeslagen in Supabase met Row Level Security, en wijzigingen worden gelogd in de audit trail. De applicatie voldoet aan de AVG-richtlijnen.',
+    answer: 'Ja. City Solid gebruikt een 3-zone beveiligingsmodel. Zone A (operationeel) is toegankelijk voor alle rollen. Zone B (BSN, medisch, justitie, schulden) is alleen voor admin en intaker, met automatische inzage-logging. Zone C (ID-scans) heeft korte toegangslinks van 5 minuten. Alle data wordt versleuteld verzonden (HTTPS) met Row Level Security op alle 16 tabellen.',
     category: 'Beveiliging',
-    tags: ['beveiliging', 'privacy', 'avg', 'versleuteling', 'data'],
+    tags: ['beveiliging', 'privacy', 'avg', 'versleuteling', 'data', '3-zone', 'zone b'],
+  },
+  {
+    question: 'Waarom zie ik geen medische of justitie-gegevens?',
+    answer: 'Gevoelige gegevens (gezondheid, justitie, schulden, BSN) zijn onderdeel van Zone B en alleen zichtbaar voor gebruikers met de rol admin of intaker. Als trainer, manager of readonly-gebruiker zie je de melding "Gevoelige gegevens — alleen zichtbaar voor admin en intaker".',
+    category: 'Beveiliging',
+    tags: ['zone b', 'gevoelig', 'medisch', 'justitie', 'toegang', 'rol'],
+  },
+  {
+    question: 'Waar vind ik het audit log?',
+    answer: 'Ga naar Instellingen → Audit Log. Hier vind je een onwijzigbaar logboek van alle acties: aanmaken, wijzigen, verwijderen, exports en inzage van gevoelige data. Alleen admin en manager kunnen het log inzien.',
+    category: 'Beheer',
+    tags: ['audit', 'log', 'acties', 'beheer', 'instellingen'],
+  },
+  {
+    question: 'Hoe configureer ik de intake-vragenlijst?',
+    answer: 'Ga naar Instellingen → Vragenlijst Kandidaten. Hier kun je per veld het label bewerken, velden verplicht maken of deactiveren, en nieuwe velden toevoegen. Wijzigingen worden direct doorgevoerd in het intake- en aanmeldingsformulier.',
+    category: 'Beheer',
+    tags: ['vragenlijst', 'configuratie', 'intake', 'velden', 'verplicht'],
   },
 ];
 
