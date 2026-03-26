@@ -472,10 +472,12 @@ BSN, medische informatie, middelengebruik, justitieel verleden en schulden. Deze
 ID-scans worden opgeslagen in een aparte beveiligde opslag met korte toegangslinks (5 minuten).
 
 **Technische maatregelen:**
+• **Python FastAPI backend** — gevoelige data (Zone B + C) loopt via een server-side service layer, nooit direct vanuit de browser
+• **JWT verificatie** — elke backend-request wordt gevalideerd met het Supabase token
 • **Row Level Security (RLS)** op alle 16 tabellen
 • **Signed URLs** voor bestanden (niet publiek toegankelijk)
 • **Content Security Policy** headers tegen XSS
-• **Onwijzigbaar audit log** voor alle acties
+• **Onwijzigbaar audit log** — server-side afgedwongen, niet te omzeilen
 • **Error Boundary** — bij fouten worden geen technische details getoond
 
 Zie **SECURITY.md** in de projectmap voor het volledige beveiligingsdocument.`,
@@ -667,7 +669,7 @@ const FAQ_ITEMS: FAQItem[] = [
   },
   {
     question: 'Is de data beveiligd?',
-    answer: 'Ja. City Solid gebruikt een 3-zone beveiligingsmodel. Zone A (operationeel) is toegankelijk voor alle rollen. Zone B (BSN, medisch, justitie, schulden) is alleen voor admin en intaker, met automatische inzage-logging. Zone C (ID-scans) heeft korte toegangslinks van 5 minuten. Alle data wordt versleuteld verzonden (HTTPS) met Row Level Security op alle 16 tabellen.',
+    answer: 'Ja. City Solid gebruikt een 3-zone beveiligingsmodel met een Python FastAPI backend als service layer. Zone A (operationeel) gaat direct naar Supabase. Zone B (BSN, medisch, justitie, schulden) en Zone C (ID-scans) lopen via de backend met server-side JWT verificatie en automatische audit logging. De frontend kan nooit direct bij gevoelige data.',
     category: 'Beveiliging',
     tags: ['beveiliging', 'privacy', 'avg', 'versleuteling', 'data', '3-zone', 'zone b'],
   },
