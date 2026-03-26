@@ -35,11 +35,11 @@ import type { Optie } from '@/lib/types';
 // ---------------------------------------------------------------------------
 
 const CATEGORIEEN = [
-  { key: 'Wijk', label: 'Wijk', icon: MapPin },
-  { key: 'Gebied', label: 'Gebied', icon: Tag },
-  { key: 'Uitkering', label: 'Uitkering', icon: Wallet },
-  { key: 'Klantmanager', label: 'Klantmanager', icon: Users },
-  { key: 'Traject', label: 'Traject', icon: Route },
+  { key: 'wijk', label: 'Wijk', icon: MapPin },
+  { key: 'gebied', label: 'Gebied', icon: Tag },
+  { key: 'uitkering', label: 'Uitkering', icon: Wallet },
+  { key: 'klantmanager', label: 'Klantmanager', icon: Users },
+  { key: 'traject', label: 'Traject', icon: Route },
 ] as const;
 
 type Categorie = (typeof CATEGORIEEN)[number]['key'];
