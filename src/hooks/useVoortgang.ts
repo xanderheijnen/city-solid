@@ -10,7 +10,7 @@ export const voortgangKeys = {
 
 export function useVoortgangByGroep(groepId: string | undefined) {
   return useQuery({
-    queryKey: voortgangKeys.byGroep(groepId!),
+    queryKey: voortgangKeys.byGroep(groepId ?? ''),
     queryFn: async () => {
       const { data: deelnemers, error: dErr } = await supabase
         .from('cs_kandidaat_trainingen')

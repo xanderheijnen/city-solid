@@ -10,7 +10,7 @@ export const aanwezigheidKeys = {
 // Fetch all attendance records for all deelnemers in a trainingsgroep
 export function useAanwezigheidByGroep(groepId: string | undefined) {
   return useQuery({
-    queryKey: aanwezigheidKeys.byGroep(groepId!),
+    queryKey: aanwezigheidKeys.byGroep(groepId ?? ''),
     queryFn: async () => {
       // First get all kandidaat_training IDs for this groep
       const { data: deelnemers, error: dErr } = await supabase

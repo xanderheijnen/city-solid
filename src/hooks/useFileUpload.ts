@@ -48,16 +48,16 @@ export function useFileUpload() {
 
       if (uploadError) throw uploadError;
 
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-
-      // For private buckets, use signed URL instead
+      // Always use signed URLs for private bucket — never expose public URLs
       const { data: signedData, error: signedError } = await supabase.storage
         .from(BUCKET)
         .createSignedUrl(path, 60 * 60); // 1 hour signed URL
 
-      const url = signedData?.signedUrl ?? data.publicUrl;
+      if (signedError || !signedData?.signedUrl) {
+        throw new Error('Kon geen beveiligde URL aanmaken voor het bestand');
+      }
 
-      return { path, publicUrl: url };
+      return { path, publicUrl: signedData.signedUrl };
     } finally {
       setUploading(false);
     }

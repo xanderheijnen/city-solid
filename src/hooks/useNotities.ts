@@ -9,7 +9,7 @@ export const notitieKeys = {
 
 export function useNotities(kandidaatId: string | undefined) {
   return useQuery({
-    queryKey: notitieKeys.byKandidaat(kandidaatId!),
+    queryKey: notitieKeys.byKandidaat(kandidaatId ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cs_notities')

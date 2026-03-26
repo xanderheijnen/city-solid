@@ -85,7 +85,7 @@ export function useKandidaten(filters?: KandidaatFilters) {
 
 export function useKandidaat(id: string | undefined) {
   return useQuery({
-    queryKey: kandidaatKeys.detail(id!),
+    queryKey: kandidaatKeys.detail(id ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cs_kandidaten')

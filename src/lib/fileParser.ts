@@ -125,7 +125,7 @@ const BOOLEAN_FIELDS = new Set([
 ]);
 
 // Array fields (comma-separated in input)
-const ARRAY_FIELDS = new Set(['uitkering', 'gewenste_sector']);
+const ARRAY_FIELDS = new Set(['uitkering', 'gewenste_sector', 'gewenst_project']);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -180,14 +180,24 @@ function parseCellValue(field: string, raw: unknown): string | string[] | boolea
   if (field === 'geslacht') return parseGeslacht(raw);
 
   // Date fields
-  if (field.includes('datum') && raw instanceof Date) {
-    return raw.toISOString().split('T')[0];
-  }
-  if (field.includes('datum') && typeof raw === 'number') {
-    // Excel serial date
-    const date = XLSX.SSF.parse_date_code(raw);
-    if (date) {
-      return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+  if (field.includes('datum')) {
+    if (raw instanceof Date) {
+      return raw.toISOString().split('T')[0];
+    }
+    if (typeof raw === 'number') {
+      // Excel serial date
+      const date = XLSX.SSF.parse_date_code(raw);
+      if (date) {
+        return `${date.y}-${String(date.m).padStart(2, '0')}-${String(date.d).padStart(2, '0')}`;
+      }
+    }
+    if (typeof raw === 'string') {
+      // Try to parse common date formats: DD-MM-YYYY, DD/MM/YYYY, YYYY-MM-DD
+      const s = raw.trim();
+      const isoMatch = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`;
+      const euMatch = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+      if (euMatch) return `${euMatch[3]}-${euMatch[2].padStart(2, '0')}-${euMatch[1].padStart(2, '0')}`;
     }
   }
 

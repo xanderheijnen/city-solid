@@ -159,6 +159,8 @@ export function AdminRoute({ children, roles = ['admin', 'manager'] }: AdminRout
   const navigate = useNavigate();
   const [authorized, setAuthorized] = useState(false);
   const [checking, setChecking] = useState(true);
+  // Stabilize roles to prevent infinite re-renders
+  const rolesKey = JSON.stringify(roles);
 
   useEffect(() => {
     if (authLoading) return;
@@ -167,13 +169,17 @@ export function AdminRoute({ children, roles = ['admin', 'manager'] }: AdminRout
       return;
     }
 
+    let cancelled = false;
+
     supabase
       .from('cs_user_roles')
       .select('role')
       .eq('user_id', session.user.id)
       .then(({ data }) => {
+        if (cancelled) return;
+        const parsedRoles: CsRole[] = JSON.parse(rolesKey);
         const userRoles = (data ?? []).map((r) => r.role as CsRole);
-        const hasAccess = roles.some((role) => userRoles.includes(role));
+        const hasAccess = parsedRoles.some((role) => userRoles.includes(role));
         if (!hasAccess) {
           navigate('/dashboard', { replace: true });
         } else {
@@ -181,7 +187,9 @@ export function AdminRoute({ children, roles = ['admin', 'manager'] }: AdminRout
         }
         setChecking(false);
       });
-  }, [authLoading, session, navigate, roles]);
+
+    return () => { cancelled = true; };
+  }, [authLoading, session, navigate, rolesKey]);
 
   if (authLoading || checking) {
     return (

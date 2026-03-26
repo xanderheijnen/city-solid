@@ -61,7 +61,7 @@ export function useTrainingen(filters?: TrainingenFilters) {
 
 export function useTraining(id: string | undefined) {
   return useQuery({
-    queryKey: trainingKeys.detail(id!),
+    queryKey: trainingKeys.detail(id ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cs_trainingen')
@@ -174,7 +174,7 @@ export function useTrainingsgroepen(filters?: TrainingsgroepFilters) {
 
 export function useTrainingsgroep(id: string | undefined) {
   return useQuery({
-    queryKey: trainingsgroepKeys.detail(id!),
+    queryKey: trainingsgroepKeys.detail(id ?? ''),
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cs_trainingsgroepen')

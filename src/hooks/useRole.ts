@@ -46,7 +46,7 @@ export function useRole(): UseRoleReturn {
 
       if (!cancelled) {
         if (error) {
-          console.error('Failed to fetch user roles:', error);
+          // Silent: role fetch failure handled by empty roles array
           setCurrentRoles([]);
         } else {
           setCurrentRoles((data ?? []).map((row) => row.role as CsRole));
