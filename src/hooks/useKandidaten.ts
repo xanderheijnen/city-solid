@@ -10,6 +10,39 @@ import type {
 // Query keys
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Expliciete kolomselectie — NOOIT select('*') op kandidaten
+// Gevoelige velden (BSN, medisch, justitie, schulden) staan in cs_kandidaten_sensitive
+// ---------------------------------------------------------------------------
+
+const KANDIDAAT_PUBLIC_COLUMNS = [
+  'id', 'display_id', 'traject_status',
+  'voornaam', 'achternaam', 'geslacht', 'geboortedatum', 'leeftijd',
+  'geboorteplaats', 'nationaliteit',
+  'straat', 'postcode', 'woonplaats', 'ingeschreven_adres_brp', 'reden_geen_brp',
+  'wijk', 'gebied',
+  'telefoon', 'email', 'contactpersoon', 'whatsapp', 'eigen_vervoer', 'rijbewijs',
+  'zorgverzekering',
+  'uitkering', 'toestemming',
+  'aanmeld_type', 'aanmelder_naam', 'aanmelder_telefoon', 'aanmelder_email',
+  'door_wie_bekend', 'aanmeld_organisatie', 'gewenst_project',
+  'gewenste_sector', 'certificaat_voorkeur_1', 'certificaat_voorkeur_2',
+  'motivatie', 'demotivatie', 'stip_aan_de_horizon',
+  'goede_eigenschappen', 'minder_goed_in', 'talen', 'hobbys',
+  'klantmanager',
+  'woonsituatie', 'kinderen',
+  'trajecten', 'hulpverleners_betrokken', 'afspraken_hulp',
+  'opleiding', 'diploma_behaald', 'opleiding_niveau', 'reden_uitval',
+  'cursussen_gevolgd', 'certificaten_behaald',
+  'werkervaring', 'waarom_lukte_niet', 'heeft_cv',
+  'acties_afspraken', 'leefgebieden_aandacht',
+  'uitstroom_status',
+  'activiteit', 'csn', 'no_show', 'eenoudergezin', 'verandering',
+  'foto_url', 'cv_url',
+  'aanmeld_datum', 'intake_datum', 'intake_tijd', 'intake_notities',
+  'created_by', 'created_at', 'updated_at',
+].join(',');
+
 export const kandidaatKeys = {
   all: ['kandidaten'] as const,
   lists: () => [...kandidaatKeys.all, 'list'] as const,
@@ -29,7 +62,7 @@ export function useKandidaten(filters?: KandidaatFilters) {
     queryFn: async () => {
       let query = supabase
         .from('cs_kandidaten')
-        .select('*')
+        .select(KANDIDAAT_PUBLIC_COLUMNS)
         .order('created_at', { ascending: false });
 
       if (filters?.search) {
@@ -89,7 +122,7 @@ export function useKandidaat(id: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('cs_kandidaten')
-        .select('*')
+        .select(KANDIDAAT_PUBLIC_COLUMNS)
         .eq('id', id!)
         .single();
 

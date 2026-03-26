@@ -62,10 +62,20 @@ export function useRapportageDeelnemers(activiteit?: string) {
   return useQuery({
     queryKey: rapportageKeys.deelnemers(activiteit),
     queryFn: async () => {
-      // 1. Fetch kandidaten
+      // 1. Fetch kandidaten — alleen operationele velden, GEEN BSN/medisch/justitie/schulden
+      const RAPPORTAGE_COLUMNS = [
+        'id', 'display_id', 'traject_status', 'voornaam', 'achternaam',
+        'geslacht', 'geboortedatum', 'leeftijd', 'nationaliteit',
+        'wijk', 'gebied', 'woonplaats', 'ingeschreven_adres_brp',
+        'telefoon', 'email', 'uitkering', 'rijbewijs',
+        'aanmeld_organisatie', 'gewenste_sector', 'opleiding', 'opleiding_niveau',
+        'uitstroom_status', 'activiteit', 'csn', 'no_show', 'eenoudergezin', 'verandering',
+        'aanmeld_datum', 'created_at',
+      ].join(',');
+
       let query = supabase
         .from('cs_kandidaten')
-        .select('*')
+        .select(RAPPORTAGE_COLUMNS)
         .order('created_at', { ascending: false });
 
       if (activiteit) {
