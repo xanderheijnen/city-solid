@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { useKandidaat, useUpdateKandidaat } from '@/hooks/useKandidaten';
 import { useAuth } from '@/hooks/useAuth';
 import { IntakeOCRDialog } from '@/components/IntakeOCRDialog';
+import { PermissionGate } from '@/components/PermissionGate';
 
 // ---------------------------------------------------------------------------
 // Secties – exact volgend op het Intakedocument 2025
@@ -383,18 +384,22 @@ export default function IntakeUitvoeren() {
             </p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => setOcrOpen(true)}>
-          <Camera className="mr-2 h-4 w-4" />
-          Formulier scannen
-        </Button>
+        <PermissionGate roles={['admin']}>
+          <Button variant="outline" onClick={() => setOcrOpen(true)}>
+            <Camera className="mr-2 h-4 w-4" />
+            Formulier scannen
+          </Button>
+        </PermissionGate>
       </div>
 
-      <IntakeOCRDialog
-        open={ocrOpen}
-        onOpenChange={setOcrOpen}
-        currentValues={getValues()}
-        onApply={handleOCRApply}
-      />
+      <PermissionGate roles={['admin']}>
+        <IntakeOCRDialog
+          open={ocrOpen}
+          onOpenChange={setOcrOpen}
+          currentValues={getValues()}
+          onApply={handleOCRApply}
+        />
+      </PermissionGate>
 
       {/* Section progress */}
       <div className="flex gap-1">
