@@ -41,32 +41,38 @@ function boolLabel(val: boolean | null | undefined): string {
   return val ? 'Ja' : 'Nee';
 }
 
+// Sanitize CSV values to prevent formula injection (=, +, -, @, tab, CR)
+function csvSafe(val: unknown): string {
+  const s = String(val ?? '');
+  if (/^[=+\-@\t\r]/.test(s)) return `'${s}`;
+  return s;
+}
+
 function exportCSV(deelnemers: DeelnemerRapportage[]) {
   const headers = [
     'Activiteit', 'CSN', 'Uitstroom', 'Wijk', 'Gebied', 'Uitkering', 'Organisatie',
     'Leeftijd', 'Geslacht', 'Opleiding', 'Woonplaats', 'Ingeschreven', 'Sector',
-    'No-show', 'Justitie', 'Rijbewijs', 'Eenoudergezin', 'Verandering',
+    'No-show', 'Rijbewijs', 'Eenoudergezin', 'Verandering',
     '# Certificaten', '# Gezakt',
   ];
   const rows = deelnemers.map((d) => [
-    d.activiteit ?? '',
-    d.csn ?? '',
-    d.uitstroom_status ?? '',
-    d.wijk ?? '',
-    d.gebied ?? '',
-    (d.uitkering ?? []).join('; '),
-    d.aanmeld_organisatie ?? '',
-    d.leeftijd ?? '',
-    d.geslacht ?? '',
-    d.opleiding_niveau ?? '',
-    d.woonplaats ?? '',
-    d.ingeschreven_adres_brp ?? '',
-    (d.gewenste_sector ?? []).join('; '),
-    boolLabel(d.no_show),
-    boolLabel(d.aanraking_politie_justitie),
-    boolLabel(d.rijbewijs),
-    boolLabel(d.eenoudergezin),
-    d.verandering ?? '',
+    csvSafe(d.activiteit),
+    csvSafe(d.csn),
+    csvSafe(d.uitstroom_status),
+    csvSafe(d.wijk),
+    csvSafe(d.gebied),
+    csvSafe((d.uitkering ?? []).join('; ')),
+    csvSafe(d.aanmeld_organisatie),
+    csvSafe(d.leeftijd),
+    csvSafe(d.geslacht),
+    csvSafe(d.opleiding_niveau),
+    csvSafe(d.woonplaats),
+    csvSafe(d.ingeschreven_adres_brp),
+    csvSafe((d.gewenste_sector ?? []).join('; ')),
+    csvSafe(boolLabel(d.no_show)),
+    csvSafe(boolLabel(d.rijbewijs)),
+    csvSafe(boolLabel(d.eenoudergezin)),
+    csvSafe(d.verandering),
     d.aantal_certificaten,
     d.aantal_gezakt,
   ]);

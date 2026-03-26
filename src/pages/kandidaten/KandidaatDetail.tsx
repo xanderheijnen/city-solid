@@ -21,6 +21,7 @@ import { useNotities, useCreateNotitie, useDeleteNotitie } from '@/hooks/useNoti
 import { useTrainingsgroepen } from '@/hooks/useTrainingen';
 import { useFileUpload } from '@/hooks/useFileUpload';
 import { useOpties } from '@/hooks/useOpties';
+import { useLogAudit } from '@/hooks/useAuditLog';
 import { GESLACHT_LABELS, RESULTAAT_LABELS } from '@/lib/constants';
 import type { Geslacht, Notitie, Resultaat } from '@/lib/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -402,6 +403,7 @@ export default function KandidaatDetail() {
 
   // ── File uploads ──
   const { upload: uploadFile, uploading: fileUploading, getSignedUrl } = useFileUpload();
+  const logAudit = useLogAudit();
   const fotoInputRef = useRef<HTMLInputElement>(null);
   const idScanInputRef = useRef<HTMLInputElement>(null);
   const cvInputRef = useRef<HTMLInputElement>(null);
@@ -1064,71 +1066,85 @@ export default function KandidaatDetail() {
               </CardContent>
             </Card>
 
-            {/* Exports */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Exports</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Button
-                    variant="outline"
-                    className="justify-start h-auto py-3"
-                    onClick={async () => {
-                      try {
-                        await exportIntakeRapport(kandidaat);
-                        toast.success('Intake rapport gedownload');
-                      } catch (err) {
-                        toast.error('Fout bij genereren rapport');
-                      }
-                    }}
-                  >
-                    <FileText className="mr-2 h-4 w-4 shrink-0" />
-                    <div className="text-left">
-                      <div className="font-medium">Intake Rapport</div>
-                      <div className="text-xs text-muted-foreground">Alle persoonsgegevens als Word document</div>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="justify-start h-auto py-3"
-                    disabled={!trainingen?.length}
-                    onClick={async () => {
-                      if (!trainingen?.length) return;
-                      const t = trainingen[0] as any;
-                      try {
-                        const { data: aanw } = await supabase
-                          .from('cs_aanwezigheid')
-                          .select('datum, status')
-                          .eq('kandidaat_training_id', t.id)
-                          .order('datum', { ascending: true });
-                        const { data: voort } = await supabase
-                          .from('cs_voortgang')
-                          .select('datum, type, omschrijving, behaald')
-                          .eq('kandidaat_training_id', t.id)
-                          .order('datum', { ascending: true });
-                        await exportVoortgangsRapport({
-                          kandidaat,
-                          groepscode: t.trainingsgroep?.groepscode ?? '—',
-                          trainingNaam: t.trainingsgroep?.training?.naam ?? '—',
-                          aanwezigheid: aanw ?? [],
-                          voortgang: voort ?? [],
-                        });
-                        toast.success('Voortgangsrapport gedownload');
-                      } catch (err) {
-                        toast.error('Fout bij genereren rapport');
-                      }
-                    }}
-                  >
-                    <Download className="mr-2 h-4 w-4 shrink-0" />
-                    <div className="text-left">
-                      <div className="font-medium">Voortgangsrapport</div>
-                      <div className="text-xs text-muted-foreground">Aanwezigheid & vorderingen samenvatting</div>
-                    </div>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Exports — alleen admin/intaker */}
+            <PermissionGate roles={['admin', 'intaker']}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Exports</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <Button
+                      variant="outline"
+                      className="justify-start h-auto py-3"
+                      onClick={async () => {
+                        try {
+                          await exportIntakeRapport(kandidaat);
+                          logAudit.mutate({
+                            actie: 'export',
+                            object_type: 'kandidaat',
+                            object_id: kandidaat.id,
+                            omschrijving: `Intake rapport geëxporteerd voor ${kandidaat.voornaam} ${kandidaat.achternaam}`,
+                          });
+                          toast.success('Intake rapport gedownload');
+                        } catch (err) {
+                          toast.error('Fout bij genereren rapport');
+                        }
+                      }}
+                    >
+                      <FileText className="mr-2 h-4 w-4 shrink-0" />
+                      <div className="text-left">
+                        <div className="font-medium">Intake Rapport</div>
+                        <div className="text-xs text-muted-foreground">Alle persoonsgegevens als Word document</div>
+                      </div>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start h-auto py-3"
+                      disabled={!trainingen?.length}
+                      onClick={async () => {
+                        if (!trainingen?.length) return;
+                        const t = trainingen[0] as any;
+                        try {
+                          const { data: aanw } = await supabase
+                            .from('cs_aanwezigheid')
+                            .select('datum, status')
+                            .eq('kandidaat_training_id', t.id)
+                            .order('datum', { ascending: true });
+                          const { data: voort } = await supabase
+                            .from('cs_voortgang')
+                            .select('datum, type, omschrijving, behaald')
+                            .eq('kandidaat_training_id', t.id)
+                            .order('datum', { ascending: true });
+                          await exportVoortgangsRapport({
+                            kandidaat,
+                            groepscode: t.trainingsgroep?.groepscode ?? '—',
+                            trainingNaam: t.trainingsgroep?.training?.naam ?? '—',
+                            aanwezigheid: aanw ?? [],
+                            voortgang: voort ?? [],
+                          });
+                          logAudit.mutate({
+                            actie: 'export',
+                            object_type: 'kandidaat',
+                            object_id: kandidaat.id,
+                            omschrijving: `Voortgangsrapport geëxporteerd voor ${kandidaat.voornaam} ${kandidaat.achternaam}`,
+                          });
+                          toast.success('Voortgangsrapport gedownload');
+                        } catch (err) {
+                          toast.error('Fout bij genereren rapport');
+                        }
+                      }}
+                    >
+                      <Download className="mr-2 h-4 w-4 shrink-0" />
+                      <div className="text-left">
+                        <div className="font-medium">Voortgangsrapport</div>
+                        <div className="text-xs text-muted-foreground">Aanwezigheid & vorderingen samenvatting</div>
+                      </div>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </PermissionGate>
           </div>
         </TabsContent>
         {/* ── Uitstroom Tab ── */}

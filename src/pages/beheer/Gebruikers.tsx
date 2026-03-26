@@ -363,8 +363,15 @@ export default function Gebruikers() {
                 type="password"
                 value={newUser.password}
                 onChange={(e) => setNewUser((u) => ({ ...u, password: e.target.value }))}
-                placeholder="Min. 6 tekens"
+                placeholder="Min. 8 tekens, hoofdletter + cijfer"
+                minLength={8}
               />
+              {newUser.password && newUser.password.length < 8 && (
+                <p className="text-xs text-destructive">Minimaal 8 tekens vereist</p>
+              )}
+              {newUser.password && newUser.password.length >= 8 && (!/[A-Z]/.test(newUser.password) || !/[0-9]/.test(newUser.password)) && (
+                <p className="text-xs text-amber-600">Gebruik minstens 1 hoofdletter en 1 cijfer</p>
+              )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -397,7 +404,7 @@ export default function Gebruikers() {
             </Button>
             <Button
               onClick={() => createUser.mutate(newUser)}
-              disabled={!newUser.email || !newUser.password || !newUser.display_name || createUser.isPending}
+              disabled={!newUser.email || !newUser.password || newUser.password.length < 8 || !newUser.display_name || createUser.isPending}
             >
               {createUser.isPending ? 'Aanmaken...' : 'Aanmaken'}
             </Button>
