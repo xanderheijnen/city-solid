@@ -104,35 +104,45 @@ Na het uploaden zie je een **preview** van de herkende kandidaten. Je kunt velde
     content: [
       {
         title: 'Kandidaatoverzicht',
-        body: `Het kandidaatoverzicht (**Kandidaten → Overzicht**) toont alle kandidaten in het systeem. Hier kun je:
+        body: `Het kandidaatoverzicht (**Alle Kandidaten**) heeft twee weergaven:
 
-• **Zoeken** op naam of andere gegevens
-• **Filteren** op status of trajectfase
-• **Sorteren** op verschillende kolommen
-• **Exporteren** naar Excel
+**Compleetheid-view (standaard):**
+• Toont per kandidaat welke gegevens compleet of incompleet zijn
+• 19 velden gegroepeerd in categorieën (Persoonlijk, Contact, Adres, Intake, Documenten)
+• Voortgangspercentage en kleurgecodeerde balk per kandidaat
+• Sorteerbaar op volledigheid (klik op "%" kolomkop)
+• Samenvattingskaarten: totaal, gemiddelde volledigheid, compleet en incompleet
 
-Klik op een kandidaat om het volledige detailscherm te openen.`,
-        tags: ['kandidaten', 'overzicht', 'zoeken', 'filteren', 'exporteren'],
+**Tabel-view:**
+• Klassieke tabelweergave met alle kolommen
+• Excel-achtige sortering: klik op een kolomkop → A→Z / Z→A
+• Sorteerbaar op alle kolommen
+
+**Kolomkiezer:** Klik op de "Kolommen"/"Velden" knop om te kiezen welke kolommen zichtbaar zijn, de volgorde te wijzigen (drag & drop) en verborgen kolommen weer aan te zetten.
+
+**Import:** Klik op "Importeren" om kandidaten te uploaden vanuit Excel, CSV, Word of PDF. Het systeem herkent automatisch bestaande kandidaten (op CSN of naam) en vult ontbrekende gegevens aan.`,
+        tags: ['kandidaten', 'overzicht', 'zoeken', 'filteren', 'exporteren', 'compleetheid', 'sorteren', 'kolommen', 'import', 'upsert'],
       },
       {
         title: 'Kandidaat detailpagina',
         body: `De detailpagina bevat alle informatie over een kandidaat, verdeeld in tabs:
 
-• **Persoon** — persoonlijke gegevens, adres, contact, financieel, sector/voorkeur, motivatie, thuissituatie, schulden, opleidingen, cursussen, werkervaring en acties/afspraken
-• **Intake** — het intakeformulier en de mogelijkheid om een intake uit te voeren
-• **Documenten** — geüploade bestanden (foto, ID scan, CV en overige documenten)
+• **Persoon** — persoonlijke gegevens, adres, contact, financieel, trajecten, sector/voorkeur, motivatie, thuissituatie, schulden, opleidingen, cursussen, werkervaring en acties/afspraken
+• **Trainingen** — gekoppelde trainingsgroepen en resultaten
+• **Certificaten** — behaalde en lopende certificaten
 • **Notities** — vrije notities van medewerkers
-• **Voortgang** — visuele weergave van de trajectfase (tramlijn) met status-indicatoren voor foto, ID scan en CV
+• **Documenten** — pasfoto, ID-scan en CV uploaden en bekijken
 • **Uitstroom** — uitstroomstatus instellen en gespreksupdates bijhouden
 
-**Bestanden uploaden:**
-Op de detailpagina kun je per kandidaat een **pasfoto**, **ID-scan** en **CV** uploaden. De uploadstatus wordt visueel weergegeven op de voortgangs-tramlijn met groene (aanwezig) of grijze (ontbrekend) indicatoren.
+**Trajecten koppelen:**
+Op het Persoon-tab staat een "Trajecten" sectie met gekleurde chips. Klik op een traject (bijv. Certi & Skills, City Team, BIROTA) om het te koppelen of ontkoppelen. Meerdere trajecten per kandidaat mogelijk.
+
+**Bestanden uploaden en bekijken:**
+Upload een pasfoto, ID-scan of CV. Klik op "Bekijken" om het bestand te openen in een nieuw tabblad. Je kunt bestanden ook vervangen of verwijderen.
 
 **Uitstroom beheren:**
-Op het Uitstroom-tab kun je de uitstroomstatus instellen (bijv. Werk, School, Lopend, Vrijwilligerswerk, Garantiebaan, Beschut werk, Binnen, No-show of Uitval). Daarnaast kun je gespreksupdates toevoegen met datum, tijd en inhoud om het uitstroomproces te documenteren.
-
-Je kunt vanuit de detailpagina ook een **Word-rapport exporteren** met alle intakegegevens.`,
-        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport', 'uitstroom', 'foto', 'id scan', 'cv', 'upload', 'bestanden'],
+Op het Uitstroom-tab kun je de uitstroomstatus instellen en gespreksupdates toevoegen.`,
+        tags: ['kandidaat', 'detail', 'persoon', 'intake', 'documenten', 'notities', 'voortgang', 'rapport', 'uitstroom', 'foto', 'id scan', 'cv', 'upload', 'bestanden', 'trajecten', 'bekijken'],
       },
       {
         title: 'Intake uitvoeren',
@@ -155,6 +165,21 @@ Je kunt vanuit de detailpagina ook een **Word-rapport exporteren** met alle inta
 
 Elke stap kan worden ingevuld en opgeslagen. Je kunt heen en weer navigeren tussen stappen.`,
         tags: ['intake', 'formulier', 'wizard', 'stappen', 'invullen', 'intakedocument'],
+      },
+      {
+        title: 'Formulier scannen (OCR)',
+        body: `Bij internet- of computerstoringen kun je een **foto van een handgeschreven intakeformulier** uploaden:
+
+1. Open de intake-pagina van een kandidaat
+2. Klik rechtsboven op **"Formulier scannen"**
+3. Upload een foto (PNG, JPG) of PDF van het formulier
+4. Het systeem herkent de tekst via OCR (Nederlands + Engels)
+5. Een review-dialog toont de herkende velden naast de huidige waarden
+6. Per veld kun je kiezen of de OCR-waarde overgenomen wordt
+7. Pas handmatig aan bij slecht handschrift
+
+Het systeem herkent automatisch 88+ veldlabels uit het intakeformulier.`,
+        tags: ['ocr', 'scannen', 'foto', 'handschrift', 'formulier', 'herkenning', 'camera'],
       },
     ],
   },
@@ -257,6 +282,19 @@ De gebruiker ontvangt een bevestigingsmail om het account te activeren.`,
 Je kunt rollen toewijzen of verwijderen via de **"Rol"**-knop naast elke gebruiker. Een gebruiker kan meerdere rollen hebben.`,
         tags: ['rollen', 'rechten', 'admin', 'intaker', 'trainer', 'manager', 'readonly', 'alleen lezen', 'bevoegdheden'],
       },
+      {
+        title: 'Opties beheren',
+        body: `Onder **Instellingen → Opties** kun je de keuzelijsten van de applicatie beheren. Er zijn 5 categorieën:
+
+• **Wijk** — wijken voor kandidaat-adresgegevens
+• **Gebied** — Rotterdamse gebieden
+• **Uitkering** — soorten uitkeringen
+• **Klantmanager** — klantmanagers/casemanagers
+• **Traject** — beschikbare trajecten (bijv. Certi & Skills, City Team, BIROTA)
+
+Per categorie kun je waarden **toevoegen**, **bewerken** (inline klikken), **verwijderen** (soft-delete) en **herstellen**. Verwijderde waarden worden niet meer getoond in dropdowns maar de data blijft behouden.`,
+        tags: ['opties', 'instellingen', 'wijk', 'gebied', 'uitkering', 'traject', 'klantmanager', 'beheer', 'keuzelijst'],
+      },
     ],
   },
   {
@@ -272,6 +310,7 @@ Je kunt rollen toewijzen of verwijderen via de **"Rol"**-knop naast elke gebruik
 • **Top 6 gebieden** — donut-grafieken met de meest voorkomende Rotterdamse gebieden
 • **Statistiekkaarten** — meest voorkomende opleiding, % geen BRP, % justitie, % uitkering, gemiddelde leeftijd en man/vrouw verdeling
 • **Wisselbare grafieken** — 6 grafieken (leeftijd, geslacht, uitkering, opleiding, organisatie, sector) met 5 weergavemodi per grafiek
+• **Vergroten** — klik op het vergroot-icoon (⛶) naast een grafiek om deze als popup op groot formaat te bekijken
 
 Gebruik het **activiteitenfilter** rechtsboven om te filteren op een specifieke activiteit (bijv. BIROTA, CWST). Dit filter werkt op alle rapportagepagina's.`,
         tags: ['rapportage', 'dashboard', 'pipeline', 'grafieken', 'statistieken', 'activiteit', 'filter'],
@@ -537,6 +576,36 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: 'Ga naar Rapportage → Eindrapportage. Selecteer eventueel een activiteit en klik op "Printen" om het rapport af te drukken of als PDF op te slaan. Het rapport bevat secties over feiten & cijfers, gebieden, aanmelders, deelnemersinfo, certificaten en uitstroom.',
     category: 'Rapportage',
     tags: ['eindrapportage', 'pmg', 'printen', 'pdf', 'rapport'],
+  },
+  {
+    question: 'Hoe koppel ik een traject aan een kandidaat?',
+    answer: 'Open de kandidaat-detailpagina en ga naar het Persoon-tab. In de sectie "Trajecten" zie je gekleurde chips voor elk beschikbaar traject. Klik op een traject om het te koppelen of ontkoppelen. Je kunt meerdere trajecten per kandidaat selecteren.',
+    category: 'Kandidaten',
+    tags: ['traject', 'koppelen', 'kandidaat', 'chips', 'certi', 'city team'],
+  },
+  {
+    question: 'Hoe scan ik een handgeschreven formulier?',
+    answer: 'Open de intake-pagina van een kandidaat en klik rechtsboven op "Formulier scannen". Upload een foto of PDF van het formulier. Het systeem herkent de tekst via OCR en toont een review-dialog waar je per veld kunt kiezen welke waarden overgenomen worden.',
+    category: 'Kandidaten',
+    tags: ['ocr', 'scannen', 'handschrift', 'foto', 'formulier', 'intake'],
+  },
+  {
+    question: 'Wat gebeurt er als ik dezelfde Excel opnieuw importeer?',
+    answer: 'Het systeem herkent bestaande kandidaten op basis van CSN-nummer of voornaam+achternaam. Bij een dubbele import worden alleen lege velden aangevuld met nieuwe data — bestaande waarden blijven behouden. Er worden geen duplicaten aangemaakt.',
+    category: 'Kandidaten',
+    tags: ['import', 'duplicaat', 'upsert', 'excel', 'aanvullen'],
+  },
+  {
+    question: 'Hoe kan ik een grafiek vergroten op het rapportage dashboard?',
+    answer: 'Klik op het vergroot-icoon (⛶) rechts naast de grafiektype-knoppen. De grafiek opent in een groot popup-venster. Je kunt ook in de popup het grafiektype wisselen.',
+    category: 'Rapportage',
+    tags: ['grafiek', 'vergroten', 'popup', 'dashboard', 'rapportage'],
+  },
+  {
+    question: 'Hoe beheer ik de opties/keuzelijsten?',
+    answer: 'Ga naar Instellingen → Opties. Hier vind je tabs voor Wijk, Gebied, Uitkering, Klantmanager en Traject. Per tab kun je waarden toevoegen, inline bewerken (klik op de naam), verwijderen (soft-delete) en herstellen.',
+    category: 'Beheer',
+    tags: ['opties', 'keuzelijst', 'traject', 'wijk', 'beheren', 'instellingen'],
   },
   {
     question: 'Hoe werkt de AI rapportage?',
